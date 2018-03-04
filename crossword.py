@@ -1,6 +1,7 @@
 import npyscreen
 import curses
 import logging
+import string
 
 from grid_renderer import GridRenderer, LineType
 log = logging.getLogger('puzzle')
@@ -19,6 +20,12 @@ class Vector:
     def __mod__(self, other):
         return Vector(self.x % other.x, self.y % other.y)
 
+def input_to_chr(_input):
+    if type(_input) == int:
+        return chr(_input)
+    else:
+        assert type(_input) == str
+        return _input
 
 class Crossword(npyscreen.widget.Widget):
 
@@ -66,7 +73,7 @@ class Crossword(npyscreen.widget.Widget):
         }
 
         self.complex_handlers.append([
-            lambda _input: chr(_input).isalnum(),
+            lambda _input: len(input_to_chr(_input)) == 1 and input_to_chr(_input) in string.ascii_letters + string.digits + 'äöüÄÖÜ',
             self.handle_generic_input
         ])
 
@@ -105,8 +112,11 @@ class Crossword(npyscreen.widget.Widget):
         pass # TODO
 
     def handle_generic_input(self, _input):
+        _input = input_to_chr(_input)
+        log.info('handling input "{}"'.format(_input))
+        #log.info("len: {}".formant(len(str(_input))))
         cur_word, cur_offset = self.puzzle_words[self.cursor.y]
-        self.puzzle_input[self.cursor.y][self.cursor.x - cur_offset] = chr(_input).upper()
+        self.puzzle_input[self.cursor.y][self.cursor.x - cur_offset] = str(_input).upper()
 
         # move cursor to next character (or word if this was the last character)
         if self.cursor.x-cur_offset >= len(cur_word) - 1:
@@ -131,10 +141,10 @@ class Crossword(npyscreen.widget.Widget):
         # draw user input
         for n, ((word, offset), user_input) in enumerate(zip(self.puzzle_words, self.puzzle_input)):
             for i, char in enumerate(user_input):
-                attr = curses.A_NORMAL
+                attr = curses.A_BOLD | self.parent.theme_manager.findPair(self, 'IMPORTANT')
                 if self.cursor.x == (i+offset) and self.cursor.y == n:
                     # draw cursor
-                    attr = curses.A_STANDOUT | curses.A_BLINK
+                    attr = curses.A_STANDOUT | curses.A_BLINK | curses.A_BOLD
 
                 self.add_line(
                         self.rely + n*2 + 1,

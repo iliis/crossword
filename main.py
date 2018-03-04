@@ -18,16 +18,17 @@ class CrosswordForm(npyscreen.Form):
         self.parentApp.setNextForm(None)
 
     def create(self):
-       #self.myName        = self.add(npyscreen.TitleText, name='Name')
+        #self.myName        = self.add(npyscreen.TitleText, name='Name')
        #self.myDepartment = self.add(npyscreen.TitleSelectOne, scroll_exit=True, max_height=3, name='Department', values = ['Department 1', 'Department 2', 'Department 3'])
        #self.myDate        = self.add(npyscreen.TitleDateCombo, name='Date Employed')
        with open('puzzle.cfg', 'r') as puzzle_cfg:
            self.crossword = self.add(Crossword, cfg=json.load(puzzle_cfg))
 
 class MyApplication(npyscreen.NPSAppManaged):
-   def onStart(self):
-       self.addForm('MAIN', CrosswordForm, name='Stadtwache Ankh Morpork Management Console Login')
-       # A real application might define more forms here.......
+    def onStart(self):
+        npyscreen.setTheme(npyscreen.Themes.DefaultTheme)
+        self.addForm('MAIN', CrosswordForm, name='Stadtwache Ankh Morpork Management Console Login')
+        # A real application might define more forms here.......
 
 if __name__ == '__main__':
 
