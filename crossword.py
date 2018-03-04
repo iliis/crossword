@@ -27,17 +27,17 @@ def input_to_chr(_input):
         assert type(_input) == str
         return _input
 
-class Crossword(npyscreen.widget.Widget):
+class Crossword:
 
-    def __init__(self, screen, **kwargs):
+    def __init__(self, cfg): #, screen, **kwargs):
 
-        cfg = kwargs['cfg']
+        self.relx = 0
+        self.rely = 0
+
         self.puzzle_width  = cfg['width']
         self.puzzle_height = cfg['height']
         self.puzzle_words = cfg['words']
         self.puzzle_solution_col = cfg['solution_column']
-
-        super(Crossword, self).__init__(screen, **kwargs)
 
         self.cursor = Vector(self.puzzle_words[0][1], 0) # initialize cursor on first character of first word
 
@@ -57,25 +57,30 @@ class Crossword(npyscreen.widget.Widget):
         # user input is stored here
         self.puzzle_input = [ [' '] * len(word) for word, _ in self.puzzle_words ]
 
-        self.update()
         log.info("created crossworld")
 
     def calculate_area_needed(self):
         return self.puzzle_height*2+1, self.puzzle_width*4+1
 
-    def set_up_handlers(self):
-        super(Crossword, self).set_up_handlers()
-        self.handlers = { # overwrite existing handlers!
-            curses.KEY_UP:    self.cursor_up,
-            curses.KEY_DOWN:  self.cursor_down,
-            curses.KEY_LEFT:  self.cursor_left,
-            curses.KEY_RIGHT: self.cursor_right
-        }
-
-        self.complex_handlers.append([
-            lambda _input: len(input_to_chr(_input)) == 1 and input_to_chr(_input) in string.ascii_letters + string.digits + 'äöüÄÖÜ',
-            self.handle_generic_input
-        ])
+    def handle_input(self, key):
+        if   key == curses.KEY_LEFT:  self.cursor_move(-1, 0)
+        elif key == curses.KEY_UP:    self.cursor_move(0, -1)
+        elif key == curses.KEY_RIGHT: self.cursor_move(1, 0)
+        elif key == curses.KEY_DOWN:  self.cursor_move(0, 1)
+        elif key == curses.KEY_DC:    self.handle_generic_input(' ') # delete
+        elif key == curses.KEY_BACKSPACE:
+            self.cursor_to_next_char(-1)
+            self.handle_generic_input(' ', 0) # backspace
+        elif key == ord('\t'):        self.cursor_to_next_word(1) # tab
+        elif key == curses.KEY_BTAB:  self.cursor_to_next_word(-1) # shift-tab
+        elif key == curses.KEY_HOME:  self.cursor_home()
+        elif key == curses.KEY_END:   self.cursor_end()
+        elif len(input_to_chr(key)) == 1 and input_to_chr(key) in string.ascii_letters + string.digits + 'äöüÄÖÜ ':
+            self.handle_generic_input(key)
+        else:
+            log.info("ignored key '{}'".format(key))
+            return False # did not handle key, no need to update screen
+        return True
 
     def cursor_is_in_field(self):
         if self.cursor.x < 0 or self.cursor.y < 0 or self.cursor.x >= self.puzzle_width or self.cursor.y >= self.puzzle_height:
@@ -84,34 +89,47 @@ class Crossword(npyscreen.widget.Widget):
         word, offset = self.puzzle_words[self.cursor.y]
         return offset <= self.cursor.x < offset+len(word)
 
-    def cursor_move(self, x, y):
-        assert x != 0 or y != 0
+    def cursor_move(self, dx, dy):
+        assert dx != 0 or dy != 0
 
         while True:
-            self.cursor = (self.cursor + Vector(x, y)) % Vector(self.puzzle_width, self.puzzle_height)
+            self.cursor = (self.cursor + Vector(dx, dy)) % Vector(self.puzzle_width, self.puzzle_height)
             if self.cursor_is_in_field():
                 break
 
 
-    def cursor_up(self, _input):
-        self.cursor_move(0, -1)
+    def cursor_to_next_word(self, direction=1):
+        self.cursor.y = (self.cursor.y + direction) % self.puzzle_height
+        self.cursor.x = self.puzzle_words[self.cursor.y][1]
 
-    def cursor_down(self, _input):
-        self.cursor_move(0, 1)
+    def cursor_to_next_char(self, direction=1):
+        word, offset = self.puzzle_words[self.cursor.y]
+        if direction == 1:
+            if self.cursor.x-offset >= len(word) - 1:
+                # move to beginning of next word
+                self.cursor.y = (self.cursor.y + 1) % self.puzzle_height
+                self.cursor.x = self.puzzle_words[self.cursor.y][1]
+            else:
+                # move to next character
+                self.cursor.x += 1
+        elif direction == -1:
+            if self.cursor.x-offset <= 0:
+                # move to end of prev. word
+                self.cursor.y = (self.cursor.y - 1) % self.puzzle_height
+                word, offset = self.puzzle_words[self.cursor.y]
+                self.cursor.x = offset + len(word) - 1
+            else:
+                # move to prev character
+                self.cursor.x -= 1
 
-    def cursor_left(self, _input):
-        self.cursor_move(-1, 0)
+    def cursor_home(self):
+        self.cursor.x = self.puzzle_words[self.cursor.y][1]
 
-    def cursor_right(self, _input):
-        self.cursor_move(1, 0)
+    def cursor_end(self):
+        word, offset = self.puzzle_words[self.cursor.y]
+        self.cursor.x = offset + len(word) - 1
 
-    def cursor_home(self, _input):
-        pass # TODO
-
-    def cursor_end(self, _input):
-        pass # TODO
-
-    def handle_generic_input(self, _input):
+    def handle_generic_input(self, _input, direction=1):
         _input = input_to_chr(_input)
         log.info('handling input "{}"'.format(_input))
         #log.info("len: {}".formant(len(str(_input))))
@@ -119,36 +137,28 @@ class Crossword(npyscreen.widget.Widget):
         self.puzzle_input[self.cursor.y][self.cursor.x - cur_offset] = str(_input).upper()
 
         # move cursor to next character (or word if this was the last character)
-        if self.cursor.x-cur_offset >= len(cur_word) - 1:
-            # move to next word
-            self.cursor.y = (self.cursor.y + 1) % self.puzzle_height
-            self.cursor.x = self.puzzle_words[self.cursor.y][1]
-        else:
-            # move to next character
-            self.cursor.x += 1
+        self.cursor_to_next_char(direction)
 
-    def update(self, clear=True):
-        if clear:
-            self.clear()
-
-        if self.hidden:
-            self.clear()
-            return False
+    def draw(self, screen):
+        screen.clear()
 
         for n, line in enumerate(self.grid.render(3,1)):
-            self.add_line(self.rely + n, self.relx, line, self.make_attributes_list(line, curses.A_NORMAL), self.calculate_area_needed()[1])
+            screen.addstr(self.rely + n, self.relx, line, curses.A_NORMAL)
 
         # draw user input
         for n, ((word, offset), user_input) in enumerate(zip(self.puzzle_words, self.puzzle_input)):
             for i, char in enumerate(user_input):
-                attr = curses.A_BOLD | self.parent.theme_manager.findPair(self, 'GOOD') #curses.color_pair(4)
+                attr = curses.A_BOLD #| self.parent.theme_manager.findPair(self, 'GOOD') #curses.color_pair(4)
                 if self.cursor.x == (i+offset) and self.cursor.y == n:
                     # draw cursor
                     attr = curses.A_STANDOUT | curses.A_BLINK | curses.A_BOLD
 
-                self.add_line(
+                screen.addstr(
                         self.rely + n*2 + 1,
                         self.relx + (i+offset)*4 + 2,
                         char,
-                        [attr], 1)
+                        attr)
 
+
+    def while_waiting(self):
+        log.info("waiting in widget...")
