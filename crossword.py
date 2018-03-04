@@ -141,7 +141,7 @@ class Crossword(npyscreen.widget.Widget):
         # draw user input
         for n, ((word, offset), user_input) in enumerate(zip(self.puzzle_words, self.puzzle_input)):
             for i, char in enumerate(user_input):
-                attr = curses.A_BOLD | self.parent.theme_manager.findPair(self, 'IMPORTANT')
+                attr = curses.A_BOLD | self.parent.theme_manager.findPair(self, 'GOOD') #curses.color_pair(4)
                 if self.cursor.x == (i+offset) and self.cursor.y == n:
                     # draw cursor
                     attr = curses.A_STANDOUT | curses.A_BLINK | curses.A_BOLD

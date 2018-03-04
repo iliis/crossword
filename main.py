@@ -2,6 +2,7 @@
 import npyscreen
 import logging
 import json
+import curses
 
 from crossword import Crossword
 
@@ -26,9 +27,13 @@ class CrosswordForm(npyscreen.Form):
 
 class MyApplication(npyscreen.NPSAppManaged):
     def onStart(self):
-        npyscreen.setTheme(npyscreen.Themes.DefaultTheme)
+        npyscreen.setTheme(npyscreen.Themes.ElegantTheme)
         self.addForm('MAIN', CrosswordForm, name='Stadtwache Ankh Morpork Management Console Login')
         # A real application might define more forms here.......
+
+
+        log.info("curses has color? {}".format(curses.has_colors()))
+        log.info("colors disabled? {}".format(npyscreen.npysGlobalOptions.DISABLE_ALL_COLORS))
 
 if __name__ == '__main__':
 
