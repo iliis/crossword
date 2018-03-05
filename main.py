@@ -25,6 +25,7 @@ def main(screen):
     #curses.raw() # disable special keys and stuff (such as ctrl-c)
     screen.nodelay(True) # disable blocking on getch()
     curses.curs_set(False) # hide cursor
+    curses.mousemask(curses.ALL_MOUSE_EVENTS) # enable mouse interaction
 
     screen.clear()
     # create server for remote control

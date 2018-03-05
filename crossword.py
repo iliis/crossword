@@ -2,9 +2,11 @@ import npyscreen
 import curses
 import logging
 import string
+import math
 
 from grid_renderer import GridRenderer, LineType
 log = logging.getLogger('puzzle')
+
 
 class Vector:
     def __init__(self, x=0, y=0):
@@ -61,6 +63,9 @@ class Crossword:
         # user input is stored here
         self.puzzle_input = [ [' '] * len(word) for word, _, _ in self.words ]
 
+        # COLORS
+        curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+
         log.info("created crossworld")
 
     def calculate_area_needed(self):
@@ -81,24 +86,27 @@ class Crossword:
         elif key == curses.KEY_END:   self.cursor_end()
         elif len(input_to_chr(key)) == 1 and input_to_chr(key) in string.ascii_letters + string.digits + 'äöüÄÖÜ ':
             self.handle_generic_input(key)
+        elif key == curses.KEY_MOUSE:
+            _id, x, y, z, bstate = curses.getmouse()
+            self.handle_mouse_input(x,y,bstate)
         else:
             log.info("ignored key '{}'".format(key))
             return False # did not handle key, no need to update screen
         return True
 
-    def cursor_is_in_field(self):
-        if self.cursor.x < 0 or self.cursor.y < 0 or self.cursor.x >= self.width or self.cursor.y >= self.height:
+    def cursor_is_in_field(self, cur):
+        if cur.x < 0 or cur.y < 0 or cur.x >= self.width or cur.y >= self.height:
             return False
 
-        word, offset, _ = self.words[self.cursor.y]
-        return offset <= self.cursor.x < offset+len(word)
+        word, offset, _ = self.words[cur.y]
+        return offset <= cur.x < offset+len(word)
 
     def cursor_move(self, dx, dy):
         assert dx != 0 or dy != 0
 
         while True:
             self.cursor = (self.cursor + Vector(dx, dy)) % Vector(self.width, self.height)
-            if self.cursor_is_in_field():
+            if self.cursor_is_in_field(self.cursor):
                 break
 
 
@@ -145,6 +153,20 @@ class Crossword:
 
         self.notify_state_update('edited')
 
+    def handle_mouse_input(self, x, y, bstate):
+
+        py, px = self.screen.getbegyx()
+
+        x -= self.margin_x + px + 4
+        y -= self.margin_y + py
+
+        new_cursor = Vector(math.floor(x/4), math.floor(y/2))
+
+        if self.cursor_is_in_field(new_cursor):
+            self.cursor = new_cursor
+
+
+
     def notify_state_update(self, kind):
         self.mi.send_packet({
             'command':  'puzzle_state_update',
@@ -170,9 +192,22 @@ class Crossword:
 
         self.screen.border()
 
+        #for k, v in inspect.getmembers(self.screen):
+            #log.info("{}: {}".format(k,v))
+
         # grid
         for n, line in enumerate(self.grid.render(3,1)):
             self.screen.addstr(self.margin_y+n, self.margin_x+4, line)
+
+        """
+        # highlight current cell
+        for y in range(3):
+            self.screen.chgat(
+                    self.margin_y + self.cursor.y*2 + y,
+                    self.margin_x + self.cursor.x*4 + 4,
+                    5,
+                    curses.color_pair(10))
+        """
 
         # descriptions and numbers
         for n, (word, offset, desc) in enumerate(self.words):
@@ -191,13 +226,10 @@ class Crossword:
                 if self.cursor.x == (i+offset) and self.cursor.y == n:
                     # draw cursor
                     attr = curses.A_STANDOUT | curses.A_BLINK | curses.A_BOLD
+                    #attr = curses.color_pair(10)
 
                 self.screen.addstr(
                         self.margin_y + n*2 + 1,
                         self.margin_x + (i+offset)*4 + 2 + 4,
                         char,
                         attr)
-
-
-    def while_waiting(self):
-        log.info("waiting in widget...")
