@@ -1,6 +1,7 @@
 import socket
 import logging
 import selectors
+import json
 
 log = logging.getLogger('puzzle')
 
@@ -50,7 +51,6 @@ class ManagementInterface:
     def __init__(self, port, selector):
         self.selector = selector
 
-
         self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # could set SO_REUSEADDR so we can restart a program immediately
@@ -66,6 +66,11 @@ class ManagementInterface:
 
         self.data_buffer = {}
         self.connections = []
+
+        self.handlers = {}
+
+    def register_handler(self, command, handler):
+        self.handlers[command] = handler
 
     def __enter__(self):
         return self
@@ -104,4 +109,15 @@ class ManagementInterface:
 
     def handle_packet(self, packet):
         log.info("got packet: '{}'".format(repr(packet)))
-        pass
+
+        payload = json.loads(packet)
+
+        if payload['command'] in self.handlers:
+            self.handlers[payload['command']](payload)
+        else:
+            log.warn("No handler specifiec for command '{}'.".format(payload_length['command']))
+
+    def send_packet(self, payload):
+        data = json.dumps(payload)
+        for conn in self.connections:
+            conn.sendall(data.encode('ascii'))

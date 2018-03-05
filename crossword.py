@@ -29,38 +29,40 @@ def input_to_chr(_input):
 
 class Crossword:
 
-    def __init__(self, cfg): #, screen, **kwargs):
+    def __init__(self, cfg, management_interface): #, screen, **kwargs):
 
         self.relx = 0
         self.rely = 0
 
-        self.puzzle_width  = cfg['width']
-        self.puzzle_height = cfg['height']
-        self.puzzle_words = cfg['words']
-        self.puzzle_solution_col = cfg['solution_column']
+        self.mi = management_interface
 
-        self.cursor = Vector(self.puzzle_words[0][1], 0) # initialize cursor on first character of first word
+        self.width  = cfg['width']
+        self.height = cfg['height']
+        self.words  = cfg['words']
+        self.solution_col = cfg['solution_column']
 
-        self.grid = GridRenderer(self.puzzle_width, self.puzzle_height)
+        self.cursor = Vector(self.words[0][1], 0) # initialize cursor on first character of first word
 
-        for n, (word, offset) in enumerate(self.puzzle_words):
+        self.grid = GridRenderer(self.width, self.height)
+
+        for n, (word, offset) in enumerate(self.words):
             for i in range(len(word)):
                 self.grid.set_cell_edge(offset+i, n, LineType.THICK)
                 if i > 0:
                     self.grid.set_cell_edge_left(offset+i, n, LineType.THIN_DASHED3)
 
-        #for i in range(len(self.puzzle_words)):
-            #self.grid.set_cell_edge_left (self.puzzle_solution_col, i, LineType.DOUBLE)
-            #self.grid.set_cell_edge_right(self.puzzle_solution_col, i, LineType.DOUBLE)
+        #for i in range(len(self.words)):
+            #self.grid.set_cell_edge_left (self.solution_col, i, LineType.DOUBLE)
+            #self.grid.set_cell_edge_right(self.solution_col, i, LineType.DOUBLE)
 
 
         # user input is stored here
-        self.puzzle_input = [ [' '] * len(word) for word, _ in self.puzzle_words ]
+        self.puzzle_input = [ [' '] * len(word) for word, _ in self.words ]
 
         log.info("created crossworld")
 
     def calculate_area_needed(self):
-        return self.puzzle_height*2+1, self.puzzle_width*4+1
+        return self.height*2+1, self.width*4+1
 
     def handle_input(self, key):
         if   key == curses.KEY_LEFT:  self.cursor_move(-1, 0)
@@ -83,61 +85,76 @@ class Crossword:
         return True
 
     def cursor_is_in_field(self):
-        if self.cursor.x < 0 or self.cursor.y < 0 or self.cursor.x >= self.puzzle_width or self.cursor.y >= self.puzzle_height:
+        if self.cursor.x < 0 or self.cursor.y < 0 or self.cursor.x >= self.width or self.cursor.y >= self.height:
             return False
 
-        word, offset = self.puzzle_words[self.cursor.y]
+        word, offset = self.words[self.cursor.y]
         return offset <= self.cursor.x < offset+len(word)
 
     def cursor_move(self, dx, dy):
         assert dx != 0 or dy != 0
 
         while True:
-            self.cursor = (self.cursor + Vector(dx, dy)) % Vector(self.puzzle_width, self.puzzle_height)
+            self.cursor = (self.cursor + Vector(dx, dy)) % Vector(self.width, self.height)
             if self.cursor_is_in_field():
                 break
 
 
     def cursor_to_next_word(self, direction=1):
-        self.cursor.y = (self.cursor.y + direction) % self.puzzle_height
-        self.cursor.x = self.puzzle_words[self.cursor.y][1]
+        self.cursor.y = (self.cursor.y + direction) % self.height
+        self.cursor.x = self.words[self.cursor.y][1]
 
     def cursor_to_next_char(self, direction=1):
-        word, offset = self.puzzle_words[self.cursor.y]
+        word, offset = self.words[self.cursor.y]
         if direction == 1:
             if self.cursor.x-offset >= len(word) - 1:
                 # move to beginning of next word
-                self.cursor.y = (self.cursor.y + 1) % self.puzzle_height
-                self.cursor.x = self.puzzle_words[self.cursor.y][1]
+                self.cursor.y = (self.cursor.y + 1) % self.height
+                self.cursor.x = self.words[self.cursor.y][1]
             else:
                 # move to next character
                 self.cursor.x += 1
         elif direction == -1:
             if self.cursor.x-offset <= 0:
                 # move to end of prev. word
-                self.cursor.y = (self.cursor.y - 1) % self.puzzle_height
-                word, offset = self.puzzle_words[self.cursor.y]
+                self.cursor.y = (self.cursor.y - 1) % self.height
+                word, offset = self.words[self.cursor.y]
                 self.cursor.x = offset + len(word) - 1
             else:
                 # move to prev character
                 self.cursor.x -= 1
 
     def cursor_home(self):
-        self.cursor.x = self.puzzle_words[self.cursor.y][1]
+        self.cursor.x = self.words[self.cursor.y][1]
 
     def cursor_end(self):
-        word, offset = self.puzzle_words[self.cursor.y]
+        word, offset = self.words[self.cursor.y]
         self.cursor.x = offset + len(word) - 1
 
     def handle_generic_input(self, _input, direction=1):
         _input = input_to_chr(_input)
         log.info('handling input "{}"'.format(_input))
         #log.info("len: {}".formant(len(str(_input))))
-        cur_word, cur_offset = self.puzzle_words[self.cursor.y]
+        cur_word, cur_offset = self.words[self.cursor.y]
         self.puzzle_input[self.cursor.y][self.cursor.x - cur_offset] = str(_input).upper()
 
         # move cursor to next character (or word if this was the last character)
         self.cursor_to_next_char(direction)
+
+        self.notify_state_update('edited')
+
+    def notify_state_update(self, kind):
+        self.mi.send_packet({
+            'command':  'puzzle_state_update',
+            'kind':     str(kind),
+            'state':    {
+                'cursor': {
+                    'x': self.cursor.x,
+                    'y': self.cursor.y,
+                },
+                'input': [''.join(line) for line in self.puzzle_input],
+            }
+        })
 
     def draw(self, screen):
         screen.clear()
@@ -146,7 +163,7 @@ class Crossword:
             screen.addstr(self.rely + n, self.relx, line, curses.A_NORMAL)
 
         # draw user input
-        for n, ((word, offset), user_input) in enumerate(zip(self.puzzle_words, self.puzzle_input)):
+        for n, ((word, offset), user_input) in enumerate(zip(self.words, self.puzzle_input)):
             for i, char in enumerate(user_input):
                 attr = curses.A_BOLD #| self.parent.theme_manager.findPair(self, 'GOOD') #curses.color_pair(4)
                 if self.cursor.x == (i+offset) and self.cursor.y == n:
