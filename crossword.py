@@ -29,10 +29,12 @@ def input_to_chr(_input):
 
 class Crossword:
 
-    def __init__(self, cfg, management_interface): #, screen, **kwargs):
+    def __init__(self, screen, cfg, management_interface): #, screen, **kwargs):
 
-        self.relx = 0
-        self.rely = 0
+        self.screen = screen
+
+        self.margin_x = 3
+        self.margin_y = 1
 
         self.mi = management_interface
 
@@ -156,12 +158,21 @@ class Crossword:
             }
         })
 
-    def draw(self, screen):
-        screen.clear()
+    def resize_to_contents(self):
+        self.screen.resize(
+                self.height*3 + self.margin_y*2 + 2,
+                self.width*4  + self.margin_x*2 + 5
+                )
+
+
+    def draw(self):
+        self.screen.clear()
+
+        self.screen.border()
 
         # grid
         for n, line in enumerate(self.grid.render(3,1)):
-            screen.addstr(self.rely + n, self.relx+4, line)
+            self.screen.addstr(self.margin_y+n, self.margin_x+4, line)
 
         # descriptions and numbers
         for n, (word, offset, desc) in enumerate(self.words):
@@ -170,8 +181,8 @@ class Crossword:
             else:
                 attr = curses.A_NORMAL
 
-            screen.addstr(self.rely + n*2 + 1, self.relx, "{}.".format(n), attr)
-            screen.addstr(self.rely + self.height*2 + 2 + n, 0, "{}. {}".format(n, desc), attr)
+            self.screen.addstr(self.margin_y + n*2 + 1, self.margin_x, "{}.".format(n), attr)
+            self.screen.addstr(self.margin_y + self.height*2 + 2 + n, self.margin_x, "{}. {}".format(n, desc), attr)
 
         # draw user input
         for n, ((word, offset, desc), user_input) in enumerate(zip(self.words, self.puzzle_input)):
@@ -181,9 +192,9 @@ class Crossword:
                     # draw cursor
                     attr = curses.A_STANDOUT | curses.A_BLINK | curses.A_BOLD
 
-                screen.addstr(
-                        self.rely + n*2 + 1,
-                        self.relx + (i+offset)*4 + 2 + 4,
+                self.screen.addstr(
+                        self.margin_y + n*2 + 1,
+                        self.margin_x + (i+offset)*4 + 2 + 4,
                         char,
                         attr)
 

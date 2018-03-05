@@ -33,18 +33,27 @@ def main(screen):
         with open('puzzle.cfg', 'r') as puzzle_cfg:
             cfg = json.load(puzzle_cfg)
             log.info("using configuration: {}".format(cfg))
-            puzzle = Crossword(cfg, mi)
+            h, w = screen.getmaxyx()
+            puzzle_screen = curses.newwin(h-2, w-10, 1, 10)
+            puzzle = Crossword(puzzle_screen, cfg, mi)
 
-        puzzle.draw(screen)
+        puzzle.resize_to_contents()
+
+        # center in middle of screen
+        ph, pw = puzzle_screen.getmaxyx()
+        puzzle_screen.mvwin(int((h-ph)/2), int((w-pw)/2))
+
+        puzzle.draw()
 
         screen.refresh()
+        puzzle_screen.refresh()
 
-        def read_stdin(stdin, screen):
+        def read_stdin(stdin):
             k = screen.getch()
             if k >= 0:
                 if puzzle.handle_input(k):
-                    puzzle.draw(screen)
-                    screen.refresh()
+                    puzzle.draw()
+                    puzzle_screen.refresh()
 
         # register key handler
         sel.register(sys.stdin, selectors.EVENT_READ, read_stdin)
@@ -54,7 +63,7 @@ def main(screen):
             events = sel.select()
             for key, mask in events:
                 callback = key.data
-                callback(key.fileobj, screen)
+                callback(key.fileobj)
                 screen.refresh()
 
 if __name__ == '__main__':

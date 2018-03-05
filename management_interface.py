@@ -84,7 +84,7 @@ class ManagementInterface:
             conn.close()
 
 
-    def accept(self, sock, screen):
+    def accept(self, sock):
         conn, addr = sock.accept()  # Should be ready
         log.info("accepted connection from {}\n".format(addr))
         conn.setblocking(False)
@@ -93,7 +93,7 @@ class ManagementInterface:
         self.data_buffer[conn] = PacketParser()
         self.connections.append(conn)
 
-    def read(self, conn, screen):
+    def read(self, conn):
         data = conn.recv(4096)
 
         if data:
