@@ -216,8 +216,8 @@ class Crossword:
             else:
                 attr = curses.A_NORMAL
 
-            self.screen.addstr(self.margin_y + n*2 + 1, self.margin_x, "{}.".format(n), attr)
-            self.screen.addstr(self.margin_y + self.height*2 + 2 + n, self.margin_x, "{}. {}".format(n, desc), attr)
+            self.screen.addstr(self.margin_y + n*2 + 1, self.margin_x, "{}.".format(n+1), attr)
+            self.screen.addstr(self.margin_y + self.height*2 + 2 + n, self.margin_x, "{}. {}".format(n+1, desc), attr)
 
         # draw user input
         for n, ((word, offset, desc), user_input) in enumerate(zip(self.words, self.puzzle_input)):
