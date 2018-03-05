@@ -45,7 +45,7 @@ class Crossword:
 
         self.grid = GridRenderer(self.width, self.height)
 
-        for n, (word, offset) in enumerate(self.words):
+        for n, (word, offset, desc) in enumerate(self.words):
             for i in range(len(word)):
                 self.grid.set_cell_edge(offset+i, n, LineType.THICK)
                 if i > 0:
@@ -57,7 +57,7 @@ class Crossword:
 
 
         # user input is stored here
-        self.puzzle_input = [ [' '] * len(word) for word, _ in self.words ]
+        self.puzzle_input = [ [' '] * len(word) for word, _, _ in self.words ]
 
         log.info("created crossworld")
 
@@ -88,7 +88,7 @@ class Crossword:
         if self.cursor.x < 0 or self.cursor.y < 0 or self.cursor.x >= self.width or self.cursor.y >= self.height:
             return False
 
-        word, offset = self.words[self.cursor.y]
+        word, offset, _ = self.words[self.cursor.y]
         return offset <= self.cursor.x < offset+len(word)
 
     def cursor_move(self, dx, dy):
@@ -105,7 +105,7 @@ class Crossword:
         self.cursor.x = self.words[self.cursor.y][1]
 
     def cursor_to_next_char(self, direction=1):
-        word, offset = self.words[self.cursor.y]
+        word, offset, _ = self.words[self.cursor.y]
         if direction == 1:
             if self.cursor.x-offset >= len(word) - 1:
                 # move to beginning of next word
@@ -128,15 +128,15 @@ class Crossword:
         self.cursor.x = self.words[self.cursor.y][1]
 
     def cursor_end(self):
-        word, offset = self.words[self.cursor.y]
+        word, offset, _ = self.words[self.cursor.y]
         self.cursor.x = offset + len(word) - 1
 
     def handle_generic_input(self, _input, direction=1):
         _input = input_to_chr(_input)
         log.info('handling input "{}"'.format(_input))
         #log.info("len: {}".formant(len(str(_input))))
-        cur_word, cur_offset = self.words[self.cursor.y]
-        self.puzzle_input[self.cursor.y][self.cursor.x - cur_offset] = str(_input).upper()
+        _, offset, _ = self.words[self.cursor.y]
+        self.puzzle_input[self.cursor.y][self.cursor.x - offset] = str(_input).upper()
 
         # move cursor to next character (or word if this was the last character)
         self.cursor_to_next_char(direction)
@@ -159,11 +159,22 @@ class Crossword:
     def draw(self, screen):
         screen.clear()
 
+        # grid
         for n, line in enumerate(self.grid.render(3,1)):
-            screen.addstr(self.rely + n, self.relx, line, curses.A_NORMAL)
+            screen.addstr(self.rely + n, self.relx+4, line)
+
+        # descriptions and numbers
+        for n, (word, offset, desc) in enumerate(self.words):
+            if n == self.cursor.y:
+                attr = curses.A_BOLD
+            else:
+                attr = curses.A_NORMAL
+
+            screen.addstr(self.rely + n*2 + 1, self.relx, "{}.".format(n), attr)
+            screen.addstr(self.rely + self.height*2 + 2 + n, 0, "{}. {}".format(n, desc), attr)
 
         # draw user input
-        for n, ((word, offset), user_input) in enumerate(zip(self.words, self.puzzle_input)):
+        for n, ((word, offset, desc), user_input) in enumerate(zip(self.words, self.puzzle_input)):
             for i, char in enumerate(user_input):
                 attr = curses.A_BOLD #| self.parent.theme_manager.findPair(self, 'GOOD') #curses.color_pair(4)
                 if self.cursor.x == (i+offset) and self.cursor.y == n:
@@ -172,7 +183,7 @@ class Crossword:
 
                 screen.addstr(
                         self.rely + n*2 + 1,
-                        self.relx + (i+offset)*4 + 2,
+                        self.relx + (i+offset)*4 + 2 + 4,
                         char,
                         attr)
 
