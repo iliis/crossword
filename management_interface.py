@@ -3,6 +3,8 @@ import logging
 import selectors
 import json
 
+from helpers import *
+
 log = logging.getLogger('puzzle')
 
 class PacketParser:
@@ -118,6 +120,7 @@ class ManagementInterface:
             log.warn("No handler specifiec for command '{}'.".format(payload_length['command']))
 
     def send_packet(self, payload):
-        data = json.dumps(payload)
+        data = json.dumps(payload, cls=EnumEncoder)
+        pkt = "{}\n{}\n".format(len(data), data).encode('ascii')
         for conn in self.connections:
-            conn.sendall(data.encode('ascii'))
+            conn.sendall(pkt)
