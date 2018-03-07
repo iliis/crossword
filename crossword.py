@@ -38,6 +38,10 @@ class Crossword:
         self.margin_x = 3
         self.margin_y = 1
 
+        # inside size, without border
+        self.cell_w = 3
+        self.cell_h = 1
+
         self.mi = management_interface
 
         self.width  = cfg['width']
@@ -65,6 +69,7 @@ class Crossword:
 
         # COLORS
         curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+        curses.init_pair(11, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
         log.info("created crossworld")
 
@@ -164,6 +169,11 @@ class Crossword:
 
         if self.cursor_is_in_field(new_cursor):
             self.cursor = new_cursor
+        else:
+            # find closest valid field
+            closest_dist = float('inf')
+            closest_field = None
+            #TODO
 
 
 
@@ -186,6 +196,23 @@ class Crossword:
                 self.width*4  + self.margin_x*2 + 5
                 )
 
+    # get top-left corner ON GRID of cell
+    def cell_to_screen_coord(self, cell):
+        return Vector(
+                self.margin_x + cell.x*(self.cell_w+1) + 4,
+                self.margin_y + cell.y*(self.cell_h+1))
+
+    def set_attr(self, pos, attr):
+        self.screen.chgat(pos.y, pos.x, 1, attr)
+
+    def set_cell_attr(self, cell, attr, border=True, fill=False):
+        p = self.cell_to_screen_coord(cell)
+        for y in range(self.cell_h+2):
+            for x in range(self.cell_w+2):
+                is_border_char = (x == 0 or x == self.cell_w+1) or (y == 0 or y == self.cell_h+1)
+                if (border and is_border_char) or (fill and not is_border_char):
+                    self.set_attr(p + Vector(x,y), attr)
+
 
     def draw(self):
         self.screen.clear()
@@ -196,7 +223,7 @@ class Crossword:
             #log.info("{}: {}".format(k,v))
 
         # grid
-        for n, line in enumerate(self.grid.render(3,1)):
+        for n, line in enumerate(self.grid.render(self.cell_w,self.cell_h)):
             self.screen.addstr(self.margin_y+n, self.margin_x+4, line)
 
         """
@@ -209,6 +236,11 @@ class Crossword:
                     curses.color_pair(10))
         """
 
+
+        # highlight solution colum
+        for row in range(len(self.words)):
+            self.set_cell_attr(Vector(self.solution_col, row), curses.color_pair(11) | curses.A_BOLD)
+
         # descriptions and numbers
         for n, (word, offset, desc) in enumerate(self.words):
             if n == self.cursor.y:
@@ -216,8 +248,8 @@ class Crossword:
             else:
                 attr = curses.A_NORMAL
 
-            self.screen.addstr(self.margin_y + n*2 + 1, self.margin_x, "{}.".format(n+1), attr)
-            self.screen.addstr(self.margin_y + self.height*2 + 2 + n, self.margin_x, "{}. {}".format(n+1, desc), attr)
+            self.screen.addstr(self.margin_y + n*(self.cell_h+1) + 1,               self.margin_x, "{}.".format(n+1), attr)
+            self.screen.addstr(self.margin_y + self.height*(self.cell_h+1) + 2 + n, self.margin_x, "{}. {}".format(n+1, desc), attr)
 
         # draw user input
         for n, ((word, offset, desc), user_input) in enumerate(zip(self.words, self.puzzle_input)):
@@ -228,8 +260,11 @@ class Crossword:
                     attr = curses.A_STANDOUT | curses.A_BLINK | curses.A_BOLD
                     #attr = curses.color_pair(10)
 
+                if i + offset == self.solution_col:
+                    attr |= curses.color_pair(11)
+
                 self.screen.addstr(
-                        self.margin_y + n*2 + 1,
-                        self.margin_x + (i+offset)*4 + 2 + 4,
+                        self.margin_y + n*(self.cell_h+1) + 1,
+                        self.margin_x + (i+offset)*(self.cell_w+1) + 2 + 4,
                         char,
                         attr)
