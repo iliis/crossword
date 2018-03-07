@@ -3,6 +3,7 @@ import curses
 import logging
 import string
 import math
+from enum import Enum
 
 from grid_renderer import GridRenderer, LineType
 log = logging.getLogger('puzzle')
@@ -30,6 +31,12 @@ def input_to_chr(_input):
         return _input
 
 class Crossword:
+
+    class SolutionState(Enum):
+        IN_PROGRESS = 1
+        WRONG = 2
+        PARTIALLY_CORRECT = 3
+        CORRECT = 4
 
     def __init__(self, screen, cfg, management_interface): #, screen, **kwargs):
 
@@ -70,6 +77,17 @@ class Crossword:
         # COLORS
         curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_YELLOW)
         curses.init_pair(11, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(12, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        curses.init_pair(13, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        curses.init_pair(14, curses.COLOR_RED, curses.COLOR_BLACK)
+
+        self.colors = {
+                'highlight':            curses.color_pair(10),
+                'solution_highlight':   curses.color_pair(11),
+                'text_normal':          curses.color_pair(12),
+                'text_correct':         curses.color_pair(13),
+                'text_wrong':           curses.color_pair(14),
+            }
 
         log.info("created crossworld")
 
@@ -187,6 +205,7 @@ class Crossword:
                     'y': self.cursor.y,
                 },
                 'input': [''.join(line) for line in self.puzzle_input],
+                'solutionstate': self.validate_input(),
             }
         })
 
@@ -212,6 +231,29 @@ class Crossword:
                 is_border_char = (x == 0 or x == self.cell_w+1) or (y == 0 or y == self.cell_h+1)
                 if (border and is_border_char) or (fill and not is_border_char):
                     self.set_attr(p + Vector(x,y), attr)
+
+    # return [(word solution state, [char_correct])]
+    def validate_input(self):
+        state = []
+        for current_input, (word, offset, desc) in zip(self.puzzle_input, self.words):
+            # check every char
+            char_state = [c_in == c_sol for c_in, c_sol in zip(current_input, word)]
+            num_input = sum([c_in != ' ' and c_in != '' for c_in in current_input])
+
+            total_wrong = len(word) - sum(char_state)
+
+            if total_wrong == 0:
+                word_state = Crossword.SolutionState.CORRECT
+            elif total_wrong == 1:
+                word_state = Crossword.SolutionState.PARTIALLY_CORRECT
+            elif num_input == len(word):
+                word_state = Crossword.SolutionState.WRONG
+            else:
+                word_state = Crossword.SolutionState.IN_PROGRESS
+
+            state.append( (word_state, char_state) )
+
+        return state
 
 
     def draw(self):
@@ -252,16 +294,26 @@ class Crossword:
             self.screen.addstr(self.margin_y + self.height*(self.cell_h+1) + 2 + n, self.margin_x, "{}. {}".format(n+1, desc), attr)
 
         # draw user input
-        for n, ((word, offset, desc), user_input) in enumerate(zip(self.words, self.puzzle_input)):
-            for i, char in enumerate(user_input):
+        for n, ((word, offset, desc), user_input, (word_state, char_state)) in enumerate(zip(self.words, self.puzzle_input, self.validate_input())):
+            for i, (char, char_correct) in enumerate(zip(user_input, char_state)):
                 attr = curses.A_BOLD #| self.parent.theme_manager.findPair(self, 'GOOD') #curses.color_pair(4)
                 if self.cursor.x == (i+offset) and self.cursor.y == n:
                     # draw cursor
                     attr = curses.A_STANDOUT | curses.A_BLINK | curses.A_BOLD
                     #attr = curses.color_pair(10)
 
-                if i + offset == self.solution_col:
-                    attr |= curses.color_pair(11)
+                if word_state == Crossword.SolutionState.IN_PROGRESS:
+                    if i + offset == self.solution_col:
+                        attr |= self.colors['solution_highlight']
+                    else:
+                        attr |= self.colors['text_normal']
+                elif word_state == Crossword.SolutionState.WRONG:
+                    attr |= self.colors['text_wrong']
+                else: # [PARTIALLY_]CORRECT
+                    if char_correct:
+                        attr |= self.colors['text_correct']
+                    else:
+                        attr |= self.colors['text_wrong']
 
                 self.screen.addstr(
                         self.margin_y + n*(self.cell_h+1) + 1,
