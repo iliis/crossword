@@ -7,6 +7,7 @@ import selectors
 import sys
 
 from crossword import Crossword
+from progress_bar import ProgressBar
 from management_interface import ManagementInterface
 
 log = logging.getLogger('puzzle')
@@ -40,14 +41,22 @@ def main(screen):
 
         puzzle.resize_to_contents()
 
-        # center in middle of screen
+        # center in middle of screen (also take progress bar into account)
         ph, pw = puzzle_screen.getmaxyx()
-        puzzle_screen.mvwin(int((h-ph)/2), int((w-pw)/2))
+        puzzle_screen.mvwin(int((h-ph+4)/2), int((w-pw)/2))
+
+        ph, pw = puzzle_screen.getmaxyx()
+        py, px = puzzle_screen.getbegyx()
+        progress_bar_win = curses.newwin(4, pw, py-4, px)
+        progress_bar = ProgressBar(progress_bar_win, 'Lösungsfortschritt:')
+        puzzle.progress_bar = progress_bar
 
         puzzle.draw()
+        progress_bar.draw()
 
         screen.refresh()
         puzzle_screen.refresh()
+        progress_bar_win.refresh()
 
         def read_stdin(stdin):
             k = screen.getch()
@@ -55,6 +64,8 @@ def main(screen):
                 if puzzle.handle_input(k):
                     puzzle.draw()
                     puzzle_screen.refresh()
+                    progress_bar.draw()
+                    progress_bar_win.refresh()
 
         # register key handler
         sel.register(sys.stdin, selectors.EVENT_READ, read_stdin)

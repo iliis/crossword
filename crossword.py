@@ -89,6 +89,8 @@ class Crossword:
                 'text_wrong':           curses.color_pair(14),
             }
 
+        self.progress_bar = None
+
         log.info("created crossworld")
 
     def calculate_area_needed(self):
@@ -196,6 +198,17 @@ class Crossword:
 
 
     def notify_state_update(self, kind):
+        sol_state = self.validate_input()
+
+        sol_percent = 0
+        for (word, offset, desc), (word_state, char_states) in zip(self.words, sol_state):
+            # only count (almost) fully solved words
+            if word_state == Crossword.SolutionState.PARTIALLY_CORRECT or word_state == Crossword.SolutionState.CORRECT:
+                sol_percent += sum(char_states) / len(word) / len(self.words)
+
+        if self.progress_bar:
+            self.progress_bar.set_progress(sol_percent)
+
         self.mi.send_packet({
             'command':  'puzzle_state_update',
             'kind':     str(kind),
@@ -205,7 +218,8 @@ class Crossword:
                     'y': self.cursor.y,
                 },
                 'input': [''.join(line) for line in self.puzzle_input],
-                'solutionstate': self.validate_input(),
+                'solved_fraction': sol_percent,
+                #'solutionstate': sol_state
             }
         })
 
