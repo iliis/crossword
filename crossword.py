@@ -159,20 +159,31 @@ class Crossword:
 
     def handle_mouse_input(self, x, y, bstate):
 
-        py, px = self.screen.getbegyx()
+        py, px = self.screen.getbegyx() # window position
 
-        x -= self.margin_x + px + 4
-        y -= self.margin_y + py
+        # convert absolute into relative mouse coordinates
+        mouse_pos = Vector(x - px, y - py)
 
-        new_cursor = Vector(math.floor(x/4), math.floor(y/2))
 
-        if self.cursor_is_in_field(new_cursor):
-            self.cursor = new_cursor
-        else:
-            # find closest valid field
-            closest_dist = float('inf')
-            closest_field = None
-            #TODO
+        # find closest valid field
+        closest_dist = float('inf')
+        closest_field = None
+
+        for y, (word, offset, _) in enumerate(self.words):
+            for i in range(len(word)):
+                cell = Vector(offset+i, y)
+                d = (mouse_pos - (self.cell_to_screen_coord(cell) + Vector(self.cell_w+1, self.cell_h+1)/2)).len()
+                if d < closest_dist:
+                    closest_dist = d
+                    closest_field = cell
+
+        #log.info("clicked, closest dist: {}, pos: {}".format(closest_dist, closest_field))
+
+        assert self.cursor_is_in_field(closest_field)
+
+        # ignore mouse clicks that are too far out
+        if closest_dist <= 8:
+            self.cursor = closest_field
 
 
 
@@ -204,8 +215,8 @@ class Crossword:
 
     def resize_to_contents(self):
         self.screen.resize(
-                self.height*3 + self.margin_y*2 + 2,
-                self.width*4  + self.margin_x*2 + 5
+                self.height*(self.cell_h+2) + self.margin_y*2 + 2,
+                self.width *(self.cell_w+1) + self.margin_x*2 + 5
                 )
 
     # get top-left corner ON GRID of cell
