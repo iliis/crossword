@@ -6,6 +6,7 @@ import curses
 import selectors
 import sys
 
+from helpers import *
 from crossword import Crossword
 from progress_bar import ProgressBar
 from management_interface import ManagementInterface
@@ -36,36 +37,34 @@ def main(screen):
             cfg = json.load(puzzle_cfg)
             log.info("using configuration: {}".format(cfg))
             h, w = screen.getmaxyx()
-            puzzle_screen = curses.newwin(h-2, w-10, 1, 10)
-            puzzle = Crossword(puzzle_screen, cfg, mi)
+            puzzle = Crossword(Vector(10,1), Vector(w-10, h-2), cfg, mi)
 
         puzzle.resize_to_contents()
 
         # center in middle of screen (also take progress bar into account)
-        ph, pw = puzzle_screen.getmaxyx()
-        puzzle_screen.mvwin(int((h-ph+4)/2), int((w-pw)/2))
+        ps = puzzle.size()
+        puzzle.move(Vector(
+                int((w-ps.x)/2),
+                int((h-ps.y+4)/2)
+                ))
 
-        ph, pw = puzzle_screen.getmaxyx()
-        py, px = puzzle_screen.getbegyx()
-        progress_bar_win = curses.newwin(4, pw, py-4, px)
-        progress_bar = ProgressBar(progress_bar_win, 'Lösungsfortschritt:')
+        progress_bar = ProgressBar(
+                puzzle.pos() - Vector(0,4),
+                Vector(puzzle.size().x, 4),
+                'Lösungsfortschritt:')
         puzzle.progress_bar = progress_bar
 
-        puzzle.draw()
-        progress_bar.draw()
+        puzzle.render()
+        progress_bar.render()
 
-        screen.refresh()
-        puzzle_screen.refresh()
-        progress_bar_win.refresh()
+        curses.doupdate()
 
         def read_stdin(stdin):
             k = screen.getch()
             if k >= 0:
                 if puzzle.handle_input(k):
-                    puzzle.draw()
-                    puzzle_screen.refresh()
-                    progress_bar.draw()
-                    progress_bar_win.refresh()
+                    puzzle.render()
+                    progress_bar.render()
 
         # register key handler
         sel.register(sys.stdin, selectors.EVENT_READ, read_stdin)
@@ -76,11 +75,8 @@ def main(screen):
             for key, mask in events:
                 callback = key.data
                 callback(key.fileobj)
-                screen.refresh()
+                curses.doupdate()
 
 if __name__ == '__main__':
-
     log.info("starting application")
-
-    #TestApp = MyApplication().run()
     curses.wrapper(main)

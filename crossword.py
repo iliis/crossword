@@ -5,11 +5,12 @@ import string
 import math
 from enum import Enum
 
+from widget import WidgetBase
 from helpers import *
 from grid_renderer import GridRenderer, LineType
 log = logging.getLogger('puzzle')
 
-class Crossword:
+class Crossword(WidgetBase):
 
     class SolutionState(Enum):
         UNSOLVED = 1
@@ -17,9 +18,8 @@ class Crossword:
         PARTIALLY_CORRECT = 3
         CORRECT = 4
 
-    def __init__(self, screen, cfg, management_interface): #, screen, **kwargs):
-
-        self.screen = screen
+    def __init__(self, pos, size, cfg, management_interface): #, screen, **kwargs):
+        super(Crossword, self).__init__(pos, size)
 
         self.margin_x = 3
         self.margin_y = 1
