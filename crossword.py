@@ -18,8 +18,8 @@ class Crossword(WidgetBase):
         PARTIALLY_CORRECT = 3
         CORRECT = 4
 
-    def __init__(self, pos, size, cfg, management_interface): #, screen, **kwargs):
-        super(Crossword, self).__init__(pos, size)
+    def __init__(self, app, pos, size, cfg): #, screen, **kwargs):
+        super(Crossword, self).__init__(app, pos, size)
 
         self.margin_x = 3
         self.margin_y = 1
@@ -28,7 +28,7 @@ class Crossword(WidgetBase):
         self.cell_w = 3
         self.cell_h = 1
 
-        self.mi = management_interface
+        self.app = app
 
         self.width  = cfg['width']
         self.height = cfg['height']
@@ -199,7 +199,7 @@ class Crossword(WidgetBase):
         if self.progress_bar:
             self.progress_bar.set_progress(sol_percent)
 
-        self.mi.send_packet({
+        self.app.mi.send_packet({
             'command':  'puzzle_state_update',
             'kind':     str(kind),
             'state':    {
@@ -261,7 +261,7 @@ class Crossword(WidgetBase):
 
 
     def draw(self):
-        self.screen.clear()
+        #self.screen.clear()
 
         self.screen.border()
 
@@ -324,3 +324,6 @@ class Crossword(WidgetBase):
                         self.margin_x + (i+offset)*(self.cell_w+1) + 2 + 4,
                         char,
                         attr)
+
+        if self.progress_bar:
+            self.progress_bar.render()

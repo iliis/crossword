@@ -12,8 +12,8 @@ BAR_EMPTY = '░' # ▒ ▓
 
 class ProgressBar(WidgetBase):
 
-    def __init__(self, pos, size, label):
-        super(ProgressBar, self).__init__(pos, size)
+    def __init__(self, app, pos, size, label):
+        super(ProgressBar, self).__init__(app, pos, size)
         self.progress = 0 # 0 - 1
         self.label = label
 
@@ -21,7 +21,7 @@ class ProgressBar(WidgetBase):
         self.progress = fraction
 
     def draw(self):
-        self.screen.clear()
+        #self.screen.clear()
         self.screen.border()
 
         ph, pw = self.screen.getmaxyx()

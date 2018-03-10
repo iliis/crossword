@@ -7,9 +7,11 @@ log = logging.getLogger('puzzle')
 
 class WidgetBase:
 
-    def __init__(self, pos, size):
+    def __init__(self, app, pos, size):
+        self.app = app
         # create new screen for yourself
-        self.screen = curses.newwin(size.y, size.x, pos.y, pos.x)
+        self.screen = curses.newwin(int(size.y), int(size.x), int(pos.y), int(pos.x))
+        self.visible = True
 
     def size(self):
         h, w = self.screen.getmaxyx()
@@ -26,8 +28,12 @@ class WidgetBase:
         self.screen.mvwin(new_pos.y, new_pos.x)
 
     def draw(self):
+        # implement this in your derived class
         pass
 
     def render(self):
-        self.draw()
-        self.screen.noutrefresh() # only update internal framebuffer of curses, actual screen will be updated once after every widget has been rendered
+        if self.visible:
+            log.info('WidgetBase::render()')
+            self.draw()
+            log.info('WidgetBase::screen.noutrefresh()')
+            self.screen.noutrefresh() # only update internal framebuffer of curses, actual screen will be updated once after every widget has been rendered

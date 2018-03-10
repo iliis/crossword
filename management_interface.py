@@ -74,15 +74,12 @@ class ManagementInterface:
     def register_handler(self, command, handler):
         self.handlers[command] = handler
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        log.info('closing server connection')
+    def __del__(self):
+        #log.info('closing server connection')
         self.server_sock.shutdown(socket.SHUT_RDWR)
         self.server_sock.close()
         for conn in self.connections:
-            log.info('closing connection {}'.format(conn))
+            #log.info('closing connection {}'.format(conn))
             conn.close()
 
 
