@@ -40,6 +40,10 @@ class Application:
         self.mi = ManagementInterface(1234, self.sel)
         log.info("local address: {}".format(self.mi.get_local_addresses()))
 
+        self.mi.register_handler('quit', self.exit_app_by_packet)
+        self.mi.register_handler('show_popup', self.show_popup_from_packet)
+        self.mi.register_handler('ping', lambda _: None) # dummy command
+
         self.widget_mgr = WidgetManager(self)
 
         # register key handler
@@ -70,7 +74,7 @@ class Application:
         self.puzzle.progress_bar = self.progress_bar
 
 
-        self.ser = serial.Serial('/dev/pts/0')
+        self.ser = serial.Serial('/dev/pts/5')
         log.info('opened serial port "{}"'.format(self.ser.name))
 
 
@@ -116,6 +120,23 @@ https://github.com/iliis/crossword
             self.is_running = False
             log.info("Exiting application through admin panel.")
 
+    def exit_app_by_packet(self, packet):
+        self.is_running = False
+        log.info("Exiting application trough remote command.")
+
+    def show_popup_from_packet(self, packet):
+        if not 'title' in packet or not 'text' in packet:
+            raise ValueError("Invalid command: missing 'title' or 'text' field.")
+
+        if 'buttons' in packet:
+            buttons = packet['buttons']
+        else:
+            buttons = ['OK']
+
+        self.widget_mgr.show_single_popup(
+                packet['title'],
+                packet['text'],
+                buttons=buttons)
 
     def run(self):
         #ser.write(b'crossword running')

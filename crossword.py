@@ -200,7 +200,7 @@ class Crossword(WidgetBase):
             self.progress_bar.set_progress(sol_percent)
 
         self.app.mi.send_packet({
-            'command':  'puzzle_state_update',
+            'event':    'puzzle_state_update',
             'kind':     str(kind),
             'state':    {
                 'cursor': {

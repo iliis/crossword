@@ -5,7 +5,6 @@ from app import Application, log
 
 
 def main(screen):
-
     app = Application(screen)
     app.run()
 

@@ -3,6 +3,7 @@ import netifaces
 import logging
 import selectors
 import json
+import traceback
 
 from helpers import *
 
@@ -55,6 +56,7 @@ class ManagementInterface:
         self.port = port
         self.selector = selector
 
+        # TODO: add IPv6 support
         self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # could set SO_REUSEADDR so we can restart a program immediately
@@ -73,6 +75,9 @@ class ManagementInterface:
 
         self.handlers = {}
 
+    # handler should take one parameter: the packet
+    # handler can return a full response-packet (use reply_success/_failure()
+    # helpers) or raise an exception upon error
     def register_handler(self, command, handler):
         self.handlers[command] = handler
 
@@ -110,27 +115,73 @@ class ManagementInterface:
 
         if data:
             #log.info("received {} bytes: '{}'".format(len(data), data))
-            p = self.data_buffer[conn].parse(data)
-            if p:
-                self.handle_packet(p)
-        else:
-            log.info("closing connection {}\n".format(conn))
-            self.selector.unregister(conn)
-            conn.close()
-            self.connections.remove(conn)
+            try:
+                p = self.data_buffer[conn].parse(data)
+                if p:
+                    self.handle_packet(p, conn)
+                return
+            except ValueError as e: # int/json parse error
+                log.error("got invalid packet data: '{}'".format(data))
 
-    def handle_packet(self, packet):
+        # close connection if no data or parse error
+        log.info("closing connection {}\n".format(conn))
+        self.selector.unregister(conn)
+        conn.close()
+        self.connections.remove(conn)
+
+    def encode_packet(self, payload):
+        data = json.dumps(payload, cls=EnumEncoder)
+        return "{}\n{}\n".format(len(data), data).encode('utf8')
+
+    def reply_success(self, orig_pkt):
+        return {
+                'command':  'reply',
+                'retval':   'success',
+                'reply_to': orig_pkt,
+                }
+
+    def reply_failure(self, orig_pkt, error, retval='failure'):
+        return {
+                'command':  'reply',
+                'retval':   retval,
+                'error':    error,
+                'reply_to': orig_pkt,
+                }
+
+    def handle_packet(self, packet, conn):
         log.info("got packet: '{}'".format(repr(packet)))
 
         payload = json.loads(packet)
 
-        if payload['command'] in self.handlers:
-            self.handlers[payload['command']](payload)
+        if 'command' in payload:
+            cmd = payload['command'].lower()
+            if cmd in self.handlers:
+                try:
+                    reply = self.handlers[cmd](payload)
+                except Exception as e:
+                    log.error("failed to execute packet handler: Got Exception:\n{}\n{}".format(e, traceback.format_exc()))
+                    reply = self.reply_failure(payload, "Exception: {}".format(e), retval='exception')
+                    reply['exception'] = str(e)
+                    reply['exception_type'] = str(e.__class__.__name__)
+                    reply['traceback'] = traceback.format_exc()
+
+                # assume handler executed successfully if it doesn't return any response
+                if not reply:
+                    reply = self.reply_success(payload)
+
+            else:
+                err = "No handler specified for command '{}'.".format(cmd)
+                log.warn(err)
+                reply = self.reply_failure(payload, err)
         else:
-            log.warn("No handler specifiec for command '{}'.".format(payload_length['command']))
+            err = "Got invalid packet without 'command' field: '{}'".format(payload)
+            log.err(err)
+            reply = self.reply_failure(payload, err)
+
+        log.info("sending reply: '{}'".format(repr(reply)))
+        conn.sendall(self.encode_packet(reply))
 
     def send_packet(self, payload):
-        data = json.dumps(payload, cls=EnumEncoder)
-        pkt = "{}\n{}\n".format(len(data), data).encode('ascii')
+        pkt = self.encode_packet(payload)
         for conn in self.connections:
             conn.sendall(pkt)
