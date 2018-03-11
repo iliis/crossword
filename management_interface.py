@@ -1,4 +1,5 @@
 import socket
+import netifaces
 import logging
 import selectors
 import json
@@ -51,6 +52,7 @@ class PacketParser:
 
 class ManagementInterface:
     def __init__(self, port, selector):
+        self.port = port
         self.selector = selector
 
         self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -91,6 +93,17 @@ class ManagementInterface:
 
         self.data_buffer[conn] = PacketParser()
         self.connections.append(conn)
+
+    def get_local_addresses(self):
+        addrs = []
+        for iface in netifaces.interfaces():
+            all_addr = netifaces.ifaddresses(iface)
+
+            for proto in [netifaces.AF_INET, netifaces.AF_INET6]:
+                if proto in all_addr:
+                    addrs.extend( a['addr'] for a in all_addr[proto] )
+
+        return addrs
 
     def read(self, conn):
         data = conn.recv(4096)

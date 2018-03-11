@@ -26,6 +26,8 @@ class Application:
         self.sel = selectors.DefaultSelector()
         self.screen = screen
 
+        self.is_running = False
+
         #curses.raw() # disable special keys and stuff (such as ctrl-c)
         self.screen.nodelay(True) # disable blocking on getch()
         curses.curs_set(False) # hide cursor
@@ -34,9 +36,9 @@ class Application:
 
         self.screen.clear()
 
-
         # create server for remote control
         self.mi = ManagementInterface(1234, self.sel)
+        log.info("local address: {}".format(self.mi.get_local_addresses()))
 
         self.widget_mgr = WidgetManager(self)
 
@@ -67,6 +69,11 @@ class Application:
                 'Lösungsfortschritt:')
         self.puzzle.progress_bar = self.progress_bar
 
+
+        self.ser = serial.Serial('/dev/pts/0')
+        log.info('opened serial port "{}"'.format(self.ser.name))
+
+
         """
         self.widget_mgr.show_popup('Dies ist der Titel',
                 "asdfa sfasdfdsaf;dsa kfsa;dkfjdsa;if jsa;ifjsa dfijdsfoisdhaf " +'%'*40+ " uhsaif usahd end of first line\nsecond line here\nand a third " + "#"*250,
@@ -81,6 +88,8 @@ class Application:
                         'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
             elif k == curses.KEY_F12:
                 self.show_about()
+            elif k == curses.KEY_F11 or k == curses.KEY_F9:
+                self.show_admin_screen()
             else:
                 if not self.widget_mgr.handle_input(k):
                     log.info("unhandled key '{}'".format(k))
@@ -93,13 +102,28 @@ Diese Software ist frei verfügbar unter der GPL. Quellcode unter
 https://github.com/iliis/crossword
 """)
 
+    def show_admin_screen(self):
+        self.widget_mgr.show_single_popup('Admin',
+                'Serial Port: {}\n\n'.format(self.ser.name)
+                +'Local Address:\n{}\n'.format('\n'.join(' - {}'.format(a) for a in self.mi.get_local_addresses()))
+                +'Local Port: {}\n'.format(self.mi.port)
+                +'Remote Control Connections:\n{}\n'.format('\n'.join(' - {}'.format(c.getpeername()) for c in self.mi.connections)),
+                callback=self._admin_screen_cb,
+                buttons=['CLOSE', 'RESET ALL', 'EXIT APP'])
+
+    def _admin_screen_cb(self, button):
+        if button == 'EXIT APP':
+            self.is_running = False
+            log.info("Exiting application through admin panel.")
+
+
     def run(self):
         #ser.write(b'crossword running')
+        self.is_running = True
 
-        while True:
+        while self.is_running:
             self.widget_mgr.render()
             events = self.sel.select()
-            log.info("executing {} events after select".format(len(events)))
             for key, mask in events:
                 callback = key.data
                 callback(key.fileobj)
