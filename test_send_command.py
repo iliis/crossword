@@ -56,11 +56,14 @@ def quit():
 def ping():
     send({'command': 'ping'})
 
+def reset():
+    send({'command': 'reset'})
 
 
 fns = [
         send_popup,
         quit,
+        reset,
         ping,
     ]
 

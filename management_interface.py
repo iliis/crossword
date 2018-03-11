@@ -111,17 +111,19 @@ class ManagementInterface:
         return addrs
 
     def read(self, conn):
-        data = conn.recv(4096)
+        try:
+            data = conn.recv(4096)
 
-        if data:
+            if data:
             #log.info("received {} bytes: '{}'".format(len(data), data))
-            try:
                 p = self.data_buffer[conn].parse(data)
                 if p:
                     self.handle_packet(p, conn)
                 return
-            except ValueError as e: # int/json parse error
-                log.error("got invalid packet data: '{}'".format(data))
+        except ValueError:
+            log.error("got invalid packet data: '{}'".format(data))
+        except ConnectionResetError:
+            log.error("Connection to {} failed".format(conn))
 
         # close connection if no data or parse error
         log.info("closing connection {}\n".format(conn))

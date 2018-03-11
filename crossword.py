@@ -35,8 +35,6 @@ class Crossword(WidgetBase):
         self.words  = cfg['words']
         self.solution_col = cfg['solution_column']
 
-        self.cursor = Vector(self.words[0][1], 0) # initialize cursor on first character of first word
-
         self.grid = GridRenderer(self.width, self.height)
 
         for n, (word, offset, desc) in enumerate(self.words):
@@ -49,9 +47,6 @@ class Crossword(WidgetBase):
             #self.grid.set_cell_edge_left (self.solution_col, i, LineType.DOUBLE)
             #self.grid.set_cell_edge_right(self.solution_col, i, LineType.DOUBLE)
 
-
-        # user input is stored here
-        self.puzzle_input = [ [' '] * len(word) for word, _, _ in self.words ]
 
         # COLORS
         curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_YELLOW)
@@ -70,7 +65,19 @@ class Crossword(WidgetBase):
 
         self.progress_bar = None
 
+        self.reset()
+
         log.info("created crossworld")
+
+    def reset(self):
+        # initialize cursor on first character of first word
+        self.cursor = Vector(self.words[0][1], 0)
+
+        # user input is stored here
+        self.puzzle_input = [ [' '] * len(word) for word, _, _ in self.words ]
+
+        self.notify_state_update('reset')
+
 
     def calculate_area_needed(self):
         return self.height*2+1, self.width*4+1

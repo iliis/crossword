@@ -28,6 +28,15 @@ This is encoded as:
 
     19\n{"command": "quit"}\n
 
+In python you can write this as:
+
+    cmd = {'command': 'quit'}
+    data = json.dumps(cmd)
+    pkt = "{}\n{}\n".format(len(data), data).encode('ascii')
+
+See also test_send_command.py for some examples.
+
+
 Responses
 ---------
 
@@ -60,11 +69,13 @@ Commands
 
 - *ping*: Dummy command to check if application is still alive
 
+
     {'command': 'ping'}
 
 - *quit*: Exit application
 - *reset*: Reset application
 - *show_popup*: Show a popup message to user. The parameter 'buttons' is optional and defaults to 'OK'
+
 
     {
         'command': 'show_popup',

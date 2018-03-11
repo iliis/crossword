@@ -41,6 +41,7 @@ class Application:
         log.info("local address: {}".format(self.mi.get_local_addresses()))
 
         self.mi.register_handler('quit', self.exit_app_by_packet)
+        self.mi.register_handler('reset', lambda _: self.reset())
         self.mi.register_handler('show_popup', self.show_popup_from_packet)
         self.mi.register_handler('ping', lambda _: None) # dummy command
 
@@ -119,6 +120,8 @@ https://github.com/iliis/crossword
         if button == 'EXIT APP':
             self.is_running = False
             log.info("Exiting application through admin panel.")
+        elif button == 'RESET ALL':
+            self.reset()
 
     def exit_app_by_packet(self, packet):
         self.is_running = False
@@ -137,6 +140,12 @@ https://github.com/iliis/crossword
                 packet['title'],
                 packet['text'],
                 buttons=buttons)
+
+    def reset(self):
+        log.info("Resetting application!")
+        # TODO
+        self.screen.clear()
+        self.puzzle.reset()
 
     def run(self):
         #ser.write(b'crossword running')
