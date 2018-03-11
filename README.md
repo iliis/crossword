@@ -34,7 +34,7 @@ In python you can write this as:
     data = json.dumps(cmd)
     pkt = "{}\n{}\n".format(len(data), data).encode('ascii')
 
-See also test_send_command.py for some examples.
+See also `test_send_command.py` for some examples.
 
 
 Responses
@@ -50,16 +50,16 @@ The response always has the following format:
         'reply_to': $ORIG_PACKET
     }
 
-$RETVAL can be one of the following
+`$RETVAL` can be one of the following
 
-- *'success'*: The command was executed successfully
-- *'failure'*: Could not execute the command (e.g. because an invalid parameter was given)
-- *'exception'*: Something went wrong that really should not have
+- *`success`*: The command was executed successfully
+- *`failure`*: Could not execute the command (e.g. because an invalid parameter was given)
+- *`exception`*: Something went wrong that really should not have
 
 In the case of a failure or exception, there an additional field 'error' is provided, detailing what went wrong.
 In the case of an exception, there are also the fields 'exception', 'exception_type' and 'traceback' which give even more details.
 
-$ORIG_PACKET is simply a verbatim copy of the command that was received. This
+`$ORIG_PACKET` is simply a verbatim copy of the command that was received. This
 could be used to uniquely identify a response, e.g. by including an 'id' field
 in the original command
 
@@ -76,13 +76,14 @@ Commands
 - *reset*: Reset application
 - *show_popup*: Show a popup message to user. The parameter 'buttons' is optional and defaults to 'OK'
 
-
+```
     {
         'command': 'show_popup',
         'title':   'Hinweis',
         'text':    'Sie haben noch 5 Minuten Zeit übrig!',
         'buttons': 'OK,BLA,BLUBB'
     }
+```
 
 
 
@@ -120,6 +121,6 @@ For example, whenever the crossword is edited, the following event is sent:
 
 The cursor position is absolute and does NOT take horizontal offset of word into account!
 
-'solutionstate' says how close to a solution every word is (can be either
-'UNSOLVED', 'PARTIALLY_CORRECT', 'CORRECT' or 'WRONG') and also for every
+`solutionstate` says how close to a solution every word is (can be either
+`UNSOLVED`, `PARTIALLY_CORRECT`, `CORRECT` or `WRONG`) and also for every
 character if it is correct or not.

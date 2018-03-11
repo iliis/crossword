@@ -65,6 +65,8 @@ class Crossword(WidgetBase):
 
         self.progress_bar = None
 
+        self.solved_callback = None
+
         self.reset()
 
         log.info("created crossworld")
@@ -77,6 +79,14 @@ class Crossword(WidgetBase):
         self.puzzle_input = [ [' '] * len(word) for word, _, _ in self.words ]
 
         self.notify_state_update('reset')
+
+
+
+    # fills in solution (apart from single char)
+    def autofill(self):
+        self.puzzle_input = [ [c for c in word] for word, _, _ in self.words ]
+        log.info(str(self.puzzle_input))
+        self.puzzle_input[self.cursor.y][self.cursor.x - self.words[self.cursor.y][1]] = ' '
 
 
     def calculate_area_needed(self):
@@ -163,6 +173,7 @@ class Crossword(WidgetBase):
         self.cursor_to_next_char(direction)
 
         self.notify_state_update('edited')
+        self.check_for_solution()
 
     def handle_mouse_input(self, x, y, bstate):
 
@@ -266,6 +277,14 @@ class Crossword(WidgetBase):
 
         return state
 
+    def check_for_solution(self):
+        if all([s == Crossword.SolutionState.CORRECT for s, _ in self.validate_input()]):
+            log.info('crossword has been solved')
+            self.notify_state_update('solved')
+            self.app.widget_mgr.show_single_popup(
+                    'Gelöst!',
+                    'Gratulation, Sie haben das Kreuzworträtsel erfolgreich gelöst!',
+                    callback = self.solved_callback)
 
     def draw(self):
         #self.screen.clear()

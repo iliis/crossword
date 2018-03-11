@@ -9,6 +9,7 @@ import serial
 from helpers import *
 from crossword import Crossword
 from progress_bar import ProgressBar
+from door_panel import DoorPanel
 from management_interface import ManagementInterface
 from widget_manager import WidgetManager
 
@@ -73,6 +74,13 @@ class Application:
                 Vector(self.puzzle.size().x, 4),
                 'Lösungsfortschritt:')
         self.puzzle.progress_bar = self.progress_bar
+        self.puzzle.solved_callback = self.on_crossword_solved
+
+        self.door_panel = DoorPanel(self)
+        self.door_panel.center_in(self.screen)
+        self.widget_mgr.add(self.door_panel)
+        self.door_panel.visible = False
+        #self.widget_mgr.focus = self.door_panel
 
 
         self.ser = serial.Serial('/dev/pts/5')
@@ -114,7 +122,7 @@ https://github.com/iliis/crossword
                 +'Local Port: {}\n'.format(self.mi.port)
                 +'Remote Control Connections:\n{}\n'.format('\n'.join(' - {}'.format(c.getpeername()) for c in self.mi.connections)),
                 callback=self._admin_screen_cb,
-                buttons=['CLOSE', 'RESET ALL', 'EXIT APP'])
+                buttons=['CLOSE', 'AUTOFILL', 'RESET ALL', 'EXIT APP'])
 
     def _admin_screen_cb(self, button):
         if button == 'EXIT APP':
@@ -122,6 +130,8 @@ https://github.com/iliis/crossword
             log.info("Exiting application through admin panel.")
         elif button == 'RESET ALL':
             self.reset()
+        elif button == 'AUTOFILL':
+            self.puzzle.autofill()
 
     def exit_app_by_packet(self, packet):
         self.is_running = False
@@ -141,11 +151,20 @@ https://github.com/iliis/crossword
                 packet['text'],
                 buttons=buttons)
 
+    def on_crossword_solved(self, _):
+        self.puzzle.visible = False
+        self.door_panel.visible = True
+        self.widget_mgr.focus = self.door_panel
+
     def reset(self):
         log.info("Resetting application!")
-        # TODO
         self.screen.clear()
         self.puzzle.reset()
+
+        self.door_panel.reset()
+        self.door_panel.visible = False
+
+        self.widget_mgr.focus = self.puzzle
 
     def run(self):
         #ser.write(b'crossword running')

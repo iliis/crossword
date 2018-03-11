@@ -13,6 +13,16 @@ class WidgetBase:
         self.screen = curses.newwin(int(size.y), int(size.x), int(pos.y), int(pos.x))
         self.visible = True
 
+    def center_in(self, parent):
+        h, w = parent.getmaxyx()
+        parent_size = Vector(w, h)
+
+        sh, sw = self.screen.getmaxyx()
+        size = Vector(sw, sh)
+
+        # center in middle of parent
+        self.move(parent_size/2-size/2)
+
     def size(self):
         h, w = self.screen.getmaxyx()
         return Vector(w, h)
@@ -22,10 +32,11 @@ class WidgetBase:
         return Vector(px, py)
 
     def resize(self, new_size):
-        self.screen.resize(new_size.y, new_size.x)
+        self.screen.resize(int(new_size.y), int(new_size.x))
 
     def move(self, new_pos):
-        self.screen.mvwin(new_pos.y, new_pos.x)
+        log.info("moving window to {}".format(new_pos))
+        self.screen.mvwin(int(new_pos.y), int(new_pos.x))
 
     def draw(self):
         # implement this in your derived class

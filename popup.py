@@ -8,6 +8,8 @@ from helpers import *
 
 log = logging.getLogger('puzzle')
 
+button_w = 20
+
 class Popup(WidgetBase):
 
     def __init__(self, app, parent, title, text, buttons=['OK']):
@@ -16,10 +18,11 @@ class Popup(WidgetBase):
         h, w = parent.getmaxyx()
         parent_size = Vector(w, h)
 
-        self.width = 100
-
-        self.layout_text = layout_text(text, self.width)
+        self.layout_text = layout_text(text, 100) # max width: 100
         self.height = len(self.layout_text) + 2 # title, buttons
+
+        # set size according to contents of popup
+        self.width = max(max(len(l) for l in self.layout_text), len(buttons)*(button_w+1))
 
         size = Vector(self.width+4, self.height+4)
 
@@ -72,7 +75,6 @@ class Popup(WidgetBase):
             self.screen.addstr(3+y, 2, line)
 
         # buttons
-        button_w = 20
         for i, button in enumerate(self.buttons):
             attr = curses.A_BOLD | curses.color_pair(self.col_selected if i == self.selected_button else self.col_unselected)
             self.screen.addstr(self.height+2,
