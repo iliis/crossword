@@ -20,7 +20,9 @@ class WidgetManager:
 
     def handle_input(self, key):
         if self.focus is not None:
-            self.focus.handle_input(key)
+            return self.focus.handle_input(key)
+        else:
+            return False
 
     def show_single_popup(self, *args, **kwargs):
         if not isinstance(self.focus, Popup):
@@ -56,10 +58,7 @@ class WidgetManager:
         popup.callback = wrapped_callback
 
     def render(self):
-        log.info('widget_mgr.render()')
-
         for widget in self.widgets:
             widget.render()
 
-        log.info('curses.doupdate()')
         curses.doupdate()

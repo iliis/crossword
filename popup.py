@@ -44,6 +44,11 @@ class Popup(WidgetBase):
         elif key == curses.KEY_ENTER or key == ord(' ') or key == ord('\n') or key == ord('\r'):
             if self.callback:
                 log.info('Popup: calling callback')
+                self.app.mi.send_packet({
+                    'command':  'popup_closed',
+                    'button':   str(self.buttons[self.selected_button]),
+                    'title':    self.title
+                })
                 self.callback(self.buttons[self.selected_button])
                 return True
             else:

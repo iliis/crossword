@@ -79,8 +79,19 @@ class Application:
             if k == curses.KEY_F1 or k == curses.KEY_F2:
                 self.widget_mgr.show_single_popup('Hilfe',
                         'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
+            elif k == curses.KEY_F12:
+                self.show_about()
             else:
-                self.widget_mgr.handle_input(k)
+                if not self.widget_mgr.handle_input(k):
+                    log.info("unhandled key '{}'".format(k))
+
+    def show_about(self):
+        self.widget_mgr.show_single_popup('Kreuzworträtsel',
+                """Geschrieben von Samuel Bryner
+
+Diese Software ist frei verfügbar unter der GPL. Quellcode unter
+https://github.com/iliis/crossword
+""")
 
     def run(self):
         #ser.write(b'crossword running')

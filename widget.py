@@ -33,7 +33,5 @@ class WidgetBase:
 
     def render(self):
         if self.visible:
-            log.info('WidgetBase::render()')
             self.draw()
-            log.info('WidgetBase::screen.noutrefresh()')
             self.screen.noutrefresh() # only update internal framebuffer of curses, actual screen will be updated once after every widget has been rendered
