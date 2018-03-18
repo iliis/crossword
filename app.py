@@ -1,4 +1,3 @@
-import npyscreen
 import logging
 import json
 import curses
