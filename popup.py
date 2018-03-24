@@ -1,4 +1,3 @@
-import npyscreen
 import curses
 import logging
 from enum import Enum

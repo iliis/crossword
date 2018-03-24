@@ -7,6 +7,18 @@ It presents the user with a crossword puzzle to solve.
 Changes are transmitted in real-time over a basic TCP connection to the room manager.
 
 
+Installation
+============
+
+Fedora:
+
+    sudo dnf install python3-pyserial python3-etifaces
+
+To launch it:
+
+    python3 main.py
+
+
 
 Remote Interface
 ================
