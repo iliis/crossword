@@ -100,7 +100,7 @@ class Crossword(WidgetBase):
         elif key == curses.KEY_DC:    self.handle_generic_input(' ') # delete
         elif key == curses.KEY_BACKSPACE:
             self.cursor_to_next_char(-1)
-            self.handle_generic_input(' ', 0) # backspace
+            self.handle_generic_input(' ', 0) # backspace, don't move cursor
         elif key == ord('\t'):        self.cursor_to_next_word(1) # tab
         elif key == curses.KEY_BTAB:  self.cursor_to_next_word(-1) # shift-tab
         elif key == curses.KEY_HOME:  self.cursor_home()
@@ -149,7 +149,7 @@ class Crossword(WidgetBase):
             if self.cursor.x-offset <= 0:
                 # move to end of prev. word
                 self.cursor.y = (self.cursor.y - 1) % self.height
-                word, offset = self.words[self.cursor.y]
+                word, offset, _ = self.words[self.cursor.y]
                 self.cursor.x = offset + len(word) - 1
             else:
                 # move to prev character
@@ -164,8 +164,7 @@ class Crossword(WidgetBase):
 
     def handle_generic_input(self, _input, direction=1):
         _input = input_to_chr(_input)
-        log.info('handling input "{}"'.format(_input))
-        #log.info("len: {}".formant(len(str(_input))))
+        #log.info('handling input "{}"'.format(_input))
         _, offset, _ = self.words[self.cursor.y]
         self.puzzle_input[self.cursor.y][self.cursor.x - offset] = str(_input).upper()
 
