@@ -6,7 +6,7 @@ log = logging.getLogger('puzzle')
 
 class WidgetBase:
 
-    def __init__(self, app, pos, size):
+    def __init__(self, app, pos: Vector, size: Vector) -> None:
         self.app = app
         # create new screen for yourself
         self.screen = curses.newwin(int(size.y), int(size.x), int(pos.y), int(pos.x))
@@ -18,6 +18,8 @@ class WidgetBase:
 
         sh, sw = self.screen.getmaxyx()
         size = Vector(sw, sh)
+
+        log.info("centering in parent p={}, screen={}".format(parent_size, size))
 
         # center in middle of parent
         self.move(parent_size/2-size/2)
@@ -38,6 +40,10 @@ class WidgetBase:
         self.screen.mvwin(int(new_pos.y), int(new_pos.x))
 
     def draw(self):
+        # implement this in your derived class
+        pass
+
+    def handle_input(self, key):
         # implement this in your derived class
         pass
 

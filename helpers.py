@@ -25,6 +25,9 @@ class Vector:
     def __sub__(self, other):
         return Vector(self.x - other.x, self.y - other.y)
 
+    def __mul__(self, other):
+        return Vector(self.x * other.x, self.y * other.y)
+
     def __mod__(self, other):
         return Vector(self.x % other.x, self.y % other.y)
 

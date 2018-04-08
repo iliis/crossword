@@ -11,6 +11,7 @@ from progress_bar import ProgressBar
 from door_panel import DoorPanel
 from management_interface import ManagementInterface
 from widget_manager import WidgetManager
+from shooting_range import ShootingRange
 
 log = logging.getLogger('puzzle')
 hdlr = logging.FileHandler('puzzle.log')
@@ -81,16 +82,19 @@ class Application:
         self.door_panel.visible = False
         #self.widget_mgr.focus = self.door_panel
 
-
-        self.ser = serial.Serial('/dev/pts/5')
-        log.info('opened serial port "{}"'.format(self.ser.name))
-
+        self.shooting_range = ShootingRange(self)
+        self.widget_mgr.add(self.shooting_range)
+        self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
+        self.widget_mgr.focus = self.shooting_range
 
         """
         self.widget_mgr.show_popup('Dies ist der Titel',
                 "asdfa sfasdfdsaf;dsa kfsa;dkfjdsa;if jsa;ifjsa dfijdsfoisdhaf " +'%'*40+ " uhsaif usahd end of first line\nsecond line here\nand a third " + "#"*250,
                 lambda b: log.info('selected {}'.format(b)), ['foo', 'bar', 'baz'])
                 """
+
+    def __del__(self):
+        self.exit()
 
     def handle_input(self, stdin):
         k = self.screen.getch()
@@ -106,6 +110,11 @@ class Application:
                 if not self.widget_mgr.handle_input(k):
                     log.info("unhandled key '{}'".format(k))
 
+    def handle_shot(self, _):
+        self.shooting_range.target.shots_queue_available.clear()
+        while not self.shooting_range.target.shots_queue.empty():
+            self.shooting_range.handle_shot(self.shooting_range.target.shots_queue.get())
+
     def show_about(self):
         self.widget_mgr.show_single_popup('Kreuzworträtsel',
                 """Geschrieben von Samuel Bryner
@@ -116,7 +125,7 @@ https://github.com/iliis/crossword
 
     def show_admin_screen(self):
         self.widget_mgr.show_single_popup('Admin',
-                'Serial Port: {}\n\n'.format(self.ser.name)
+                'Serial Port: {}\n\n'.format(self.shooting_range.target.ser.name)
                 +'Local Address:\n{}\n'.format('\n'.join(' - {}'.format(a) for a in self.mi.get_local_addresses()))
                 +'Local Port: {}\n'.format(self.mi.port)
                 +'Remote Control Connections:\n{}\n'.format('\n'.join(' - {}'.format(c.getpeername()) for c in self.mi.connections)),
@@ -125,16 +134,20 @@ https://github.com/iliis/crossword
 
     def _admin_screen_cb(self, button):
         if button == 'EXIT APP':
-            self.is_running = False
             log.info("Exiting application through admin panel.")
+            self.exit()
         elif button == 'RESET ALL':
             self.reset()
         elif button == 'AUTOFILL':
             self.puzzle.autofill()
 
     def exit_app_by_packet(self, packet):
-        self.is_running = False
         log.info("Exiting application trough remote command.")
+        self.exit()
+
+    def exit(self):
+        self.is_running = False
+        self.shooting_range.target.is_running = False
 
     def show_popup_from_packet(self, packet):
         if not 'title' in packet or not 'text' in packet:
@@ -172,6 +185,7 @@ https://github.com/iliis/crossword
         while self.is_running:
             self.widget_mgr.render()
             events = self.sel.select()
+
             for key, mask in events:
                 callback = key.data
                 callback(key.fileobj)
