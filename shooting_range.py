@@ -35,7 +35,7 @@ class ShootingRange(WidgetBase):
         self.screen.addstr(1,2,"searching for serial port...")
         self.screen.refresh()
 
-        self.target = ReddotTarget("/dev/ttyUSB2")
+        self.target = ReddotTarget() #("/dev/ttyUSB2")
         self.target.start() # start asynchronous thread which polls the target
 
         self.screen.clear()
@@ -44,13 +44,13 @@ class ShootingRange(WidgetBase):
         self.target_point_diam = Vector(len(TARGET_CIRCLE[0]), len(TARGET_CIRCLE))
 
         self.MAX_POS = 4500 # min/max X/Y coordinate returned by reddot target
-        self.CIRCLE_RAD = 1000
+        self.CIRCLE_RAD = 1500
 
         curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_WHITE) # bg white
-        curses.init_pair(51, curses.COLOR_BLACK, curses.COLOR_RED)   # bg red
+        curses.init_pair(51, curses.COLOR_WHITE, curses.COLOR_RED)   # bg red
 
         curses.init_pair(52, curses.COLOR_WHITE, curses.COLOR_BLACK) # point white
-        curses.init_pair(53, curses.COLOR_BLACK, curses.COLOR_WHITE) # point red
+        curses.init_pair(53, curses.COLOR_BLACK, curses.COLOR_GREEN)   # point red
 
         curses.init_pair(54, curses.COLOR_YELLOW, curses.COLOR_BLACK) # points total
 
@@ -60,6 +60,22 @@ class ShootingRange(WidgetBase):
             #self.shots.append(
                 #(Vector(1,1), 10, 42)
             #)
+        ## all the following shots are within the red dot
+        #self.shots.extend([
+        #    (Vector(452, -1400), 1306.6, 5.7),
+        #    (Vector(452, -1260), 1306.6, 5.7),
+        #    (Vector(411, -1424), 1482.1, 5.0),
+        #    (Vector(-720, -926), 1172.9, 6.3),
+        #    (Vector(-786, 648), 1018.6, 6.9),
+        #    (Vector(976, 601), 1146.2, 6.4),
+        #    (Vector(937, 922), 1314.5, 5.7),
+        #    (Vector(-1005, 799), 1283.9, 5.8),
+        #    (Vector(-36, 1031), 1031.6, 6.8),
+        #    (Vector(1168, 152), 1177.8, 6.2),
+        #    (Vector(-1333, 129), 1339.2, 5.6),
+        #    (Vector(0, 0), 0, 0),
+        #])
+
 
     def handle_input(self, key):
         pass
@@ -82,7 +98,7 @@ class ShootingRange(WidgetBase):
         for l in range(self.target_rect_size.y):
             self.screen.addstr(l+1, 2, " "*self.target_rect_size.x, curses.color_pair(50))
         # render target circle
-        o = Vector(1,2)+self.target_rect_size/2-self.target_point_diam/2
+        o = Vector(1,0)+self.target_rect_size/2-self.target_point_diam/2
         for line, text in enumerate(TARGET_CIRCLE):
             w = len([c for c in text if c != ' '])
             self.screen.addstr(int(line+o.y), int(o.x+self.target_point_diam.x/2-w/2), " "*w, curses.color_pair(51))
@@ -102,7 +118,7 @@ class ShootingRange(WidgetBase):
 
         list_offset = max(len(self.shots) - self.target_rect_size.y + 7, 0)
         for nr, (pos, dist, pts) in enumerate(self.shots):
-            p = Vector(1,0) + self.target_rect_size/2 + pos/(self.MAX_POS*2)*self.target_rect_size
+            p = (pos/(self.MAX_POS*2) + Vector(0.5, 0.5))*self.target_rect_size
             #log.info("drawing shot {} to {}".format(pos, p))
 
             # highlight last shot
