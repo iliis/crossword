@@ -63,10 +63,13 @@ class Application:
 
         # center in middle of screen (also take progress bar into account)
         ps = self.puzzle.size()
-        self.puzzle.move(Vector(
-                int((w-ps.x)/2),
-                int((h-ps.y+4)/2)
-                ))
+        try:
+            self.puzzle.move(Vector(
+                    int((w-ps.x)/2),
+                    int((h-ps.y+4)/2)
+                    ))
+        except Exception as e:
+            raise Exception("Failed to move curses window. This can happen if your screen is too small!\nMaybe you forgot to switch to fullscreen?")
 
         self.progress_bar = ProgressBar(
                 self,
@@ -147,7 +150,12 @@ https://github.com/iliis/crossword
 
     def exit(self):
         self.is_running = False
-        self.shooting_range.target.is_running = False
+        # if something fails, shooting_range is not yet created, thus we
+        # trigger another exception when trying to set this variable. To
+        # protect against this, let's check if the member variable exists
+        # before accessing it
+        if hasattr(self, 'shooting_range'):
+            self.shooting_range.target.is_running = False
 
     def show_popup_from_packet(self, packet):
         if not 'title' in packet or not 'text' in packet:
