@@ -6,7 +6,14 @@ from helpers import *
 
 log = logging.getLogger('puzzle')
 
-DOOR_CNT = 3
+class Door:
+    def __init__(self, can_open=True, can_close=True, opened_title="Door was opened", opened_message="Door was opened", closed_title="Door was closed", closed_message="Door was closed"):
+        self.can_open = can_open
+        self.can_close = can_close
+        self.opened_title   = opened_title
+        self.opened_message = opened_message
+        self.closed_title   = closed_title
+        self.closed_message = closed_message
 
 class DoorPanel(WidgetBase):
 
@@ -19,11 +26,17 @@ class DoorPanel(WidgetBase):
         curses.init_pair(42, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(43, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
+        self.doors = [
+            Door(can_open=False, can_close=False, opened_title='Tür 1 konnte nicht geöffnet werden', opened_message='Tür 1 konnte wegen unzureichender Berechtigung nicht geöffnet werden.'),
+            Door(can_open=False, can_close=False, opened_title='Tür 2 konnte nicht geöffnet werden', opened_message='Tür 2 ist blockiert. Ein Techniker wurde informiert.'),
+            Door(can_open=True, can_close=False, opened_title='Tür 3 wurde geöffnet', opened_message='Tür 3 ist nun offen und nicht mehr abgeschlossen.', closed_title='Tür 3 konnte nicht geschlossen werden', closed_message='Ein unerwarteter Ausnahmefehler ist aufgetreten. Die Tür konnte nicht geschlossen werden.'),
+        ]
+
         self.reset()
 
     def reset(self):
         self.cursor = 0
-        self.door_states = [False] * DOOR_CNT
+        self.door_states = [False] * len(self.doors)
 
     def handle_input(self, key):
         if   key == curses.KEY_LEFT:  self.cursor -= 1
@@ -57,21 +70,24 @@ class DoorPanel(WidgetBase):
             self.actually_toggle_door()
 
     def actually_toggle_door(self):
-        self.door_states[self.cursor] = not self.door_states[self.cursor]
-
         if self.door_states[self.cursor]:
             self.app.widget_mgr.show_single_popup(
-                    'Tür {} wurde geöffnet'.format(self.cursor+1),
-                    'Tür {} ist nun offen und nicht mehr abgeschlossen.'.format(self.cursor+1))
+                    self.doors[self.cursor].closed_title,
+                    self.doors[self.cursor].closed_message)
         else:
             self.app.widget_mgr.show_single_popup(
-                    'Tür {} wurde geschlossen'.format(self.cursor+1),
-                    'Tür {} ist erfolgreich abgeschlossen worden.'.format(self.cursor+1))
+                    self.doors[self.cursor].opened_title,
+                    self.doors[self.cursor].opened_message)
 
-        self.app.mi.send_packet({
-            'event': 'door_changed',
-            'doors': self.door_states
-        })
+        # only toggle a change if the door was not locked
+        if (self.door_states[self.cursor] and self.doors[self.cursor].can_close) \
+            or (not self.door_states[self.cursor] and self.doors[self.cursor].can_open):
+            self.door_states[self.cursor] = not self.door_states[self.cursor]
+
+            self.app.mi.send_packet({
+                'event': 'door_changed',
+                'doors': self.door_states
+            })
 
 
     def draw(self):
