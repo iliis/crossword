@@ -115,8 +115,8 @@ class Application:
         elif k == curses.KEY_F12:
             self.show_about()
         # admin menu is disabled in final app
-        elif k == curses.KEY_F11:
-            self.show_admin_screen()
+        #elif k == curses.KEY_F11:
+        #    self.show_admin_screen()
         else:
             if not self.widget_mgr.handle_input(k):
                 log.info("unhandled key '{}'".format(k))
