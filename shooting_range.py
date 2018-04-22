@@ -37,7 +37,7 @@ class ShootingRangeState(Enum):
 
 class ShootingRange(WidgetBase):
     def __init__(self, app) -> None:
-        super(ShootingRange, self).__init__(app, Vector(0,0), Vector(100,37))
+        super(ShootingRange, self).__init__(app, Vector(0,0), Vector(102,37))
         self.center_in(app.screen)
 
         self.target = ReddotTarget() #("/dev/ttyUSB2")
@@ -48,7 +48,9 @@ class ShootingRange(WidgetBase):
 
         self.MAX_POS = 4500 # min/max X/Y coordinate returned by reddot target
         self.CIRCLE_RAD = 1500
-        self.TIMEOUT = 10
+        self.TIMEOUT = 3 * 60
+        self.MAX_BONUS_TIME = 10 * 60
+        self.MAX_POINTS_FOR_BONUS = 200
 
         curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_WHITE) # bg white
         curses.init_pair(51, curses.COLOR_WHITE, curses.COLOR_RED)   # bg red
@@ -125,13 +127,13 @@ class ShootingRange(WidgetBase):
         self.screen.addstr(5, self.target_rect_size.x+4, "Nr.:      Punkte.:", curses.A_BOLD)
 
         self.screen.addstr(self.target_rect_size.y-2, self.target_rect_size.x+4, "Total:", curses.A_BOLD)
-        self.screen.addstr(self.target_rect_size.y-2, self.target_rect_size.x+10,
-                "{:>13}".format(int(sum([p for _, _, p in self.shots]))),
+        self.screen.addstr(self.target_rect_size.y-2, self.target_rect_size.x+9,
+                "{:>13}".format(self.total_points()),
                 curses.A_BOLD + curses.color_pair(54))
 
         self.screen.addstr(self.target_rect_size.y-1, self.target_rect_size.x+4, "Bonuszeit:", curses.A_BOLD)
         self.screen.addstr(self.target_rect_size.y-1, self.target_rect_size.x+15,
-                "{:>3}m {:>02}s".format(3, 4),
+                time_format(self.points_to_bonus_time()),
                 curses.A_BOLD + curses.color_pair(54))
 
         list_offset = max(len(self.shots) - self.target_rect_size.y + 7, 0)
