@@ -88,10 +88,12 @@ class Application:
         #self.widget_mgr.focus = self.door_panel
 
         self.shooting_range = ShootingRange(self)
-        self.shooting_range.visible = True
         self.widget_mgr.add(self.shooting_range)
         self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
-        self.widget_mgr.focus = self.shooting_range
+        self.shooting_range.first_shot_callback = self.on_shooting_range_first_shot
+        self.shooting_range.closed_callback = self.on_shooting_range_closed
+        self.shooting_range.visible = False
+        #self.widget_mgr.focus = self.shooting_range
 
         """
         self.widget_mgr.show_popup('Dies ist der Titel',
@@ -180,6 +182,15 @@ https://github.com/iliis/crossword
         self.door_panel.visible = True
         self.widget_mgr.focus = self.door_panel
 
+    def on_shooting_range_first_shot(self):
+        self.shooting_range.visible = True
+        self.focus_last = self.widget_mgr.focus
+        self.widget_mgr.focus = self.shooting_range
+
+    def on_shooting_range_closed(self, _):
+        self.shooting_range.visible = False
+        self.widget_mgr.focus = self.focus_last
+
     def reset(self):
         log.info("Resetting application!")
         self.screen.clear()
@@ -187,6 +198,7 @@ https://github.com/iliis/crossword
 
         self.door_panel.reset()
         self.door_panel.visible = False
+        self.shooting_range.visible = False
 
         self.widget_mgr.focus = self.puzzle
 

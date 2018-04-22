@@ -3,6 +3,8 @@
 import curses
 import logging
 import math
+import threading
+import time
 from typing import List, Tuple
 
 from widget import WidgetBase
@@ -26,25 +28,27 @@ TARGET_CIRCLE = [
     "       #########      ",
 ]
 
+
+class ShootingRangeState(Enum):
+    READY = 0
+    ACTIVE = 1
+    DISABLED = 2
+
+
 class ShootingRange(WidgetBase):
     def __init__(self, app) -> None:
         super(ShootingRange, self).__init__(app, Vector(0,0), Vector(100,35))
         self.center_in(app.screen)
 
-        self.screen.border()
-        self.screen.addstr(1,2,"searching for serial port...")
-        self.screen.refresh()
-
         self.target = ReddotTarget() #("/dev/ttyUSB2")
         self.target.start() # start asynchronous thread which polls the target
-
-        self.screen.clear()
 
         self.target_rect_size  = Vector(70,33)
         self.target_point_diam = Vector(len(TARGET_CIRCLE[0]), len(TARGET_CIRCLE))
 
         self.MAX_POS = 4500 # min/max X/Y coordinate returned by reddot target
         self.CIRCLE_RAD = 1500
+        self.SHOOTING_RANGE_TIMEOUT = 10
 
         curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_WHITE) # bg white
         curses.init_pair(51, curses.COLOR_WHITE, curses.COLOR_RED)   # bg red
@@ -53,6 +57,10 @@ class ShootingRange(WidgetBase):
         curses.init_pair(53, curses.COLOR_BLACK, curses.COLOR_GREEN)   # point red
 
         curses.init_pair(54, curses.COLOR_YELLOW, curses.COLOR_BLACK) # points total
+
+        self.state = ShootingRangeState.READY
+        self.closed_callback = None
+        self.first_shot_callback = None
 
         self.shots = [] # type: List[Tuple[Vector, float, float]]
 
@@ -76,11 +84,17 @@ class ShootingRange(WidgetBase):
         #    (Vector(0, 0), 0, 0),
         #])
 
-
     def handle_input(self, key):
         pass
 
     def handle_shot(self, shot):
+        if self.state == ShootingRangeState.READY:
+            threading.Timer(self.SHOOTING_RANGE_TIMEOUT, self.shooting_range_timeout).start()
+            self.state = ShootingRangeState.ACTIVE
+            self.first_shot_callback()
+        elif self.state == ShootingRangeState.DISABLED:
+            # we are disabled and thus we discard all future shots
+            return
 
         pos = Vector(int(shot[8]), -int(shot[9])) # y axis is inverted relative to screen
         dist = float(shot[7])
@@ -144,6 +158,15 @@ class ShootingRange(WidgetBase):
             self.screen.addstr(nr+4-list_offset, self.target_rect_size.x+4, " {:>3}.  {:>12}  ".format(nr+1, pts), tbl_flags)
 
         self.screen.addstr(1,2, 'Schiessstand', curses.A_BOLD)
-        self.screen.addstr(2,2, str(self.target.ser.port))
+        #self.screen.addstr(2,2, str(self.target.ser.port))
 
-
+    def shooting_range_timeout(self):
+        log.info("shooting range timeout")
+        self.shooting_range_state = ShootingRangeState.DISABLED
+        self.app.widget_mgr.show_single_popup(
+                'Schiessstand beendet',
+                'Sie haben 0 Bonuszeit erhalten',
+                self.closed_callback,
+                ['OK'])
+        # force render as we did not receive a regular input
+        self.app.widget_mgr.render()
