@@ -104,7 +104,7 @@ class Crossword(WidgetBase):
         elif key == curses.KEY_BTAB:  self.cursor_to_next_word(-1) # shift-tab
         elif key == curses.KEY_HOME:  self.cursor_home()
         elif key == curses.KEY_END:   self.cursor_end()
-        elif len(input_to_chr(key)) == 1 and input_to_chr(key) in string.ascii_letters + string.digits + 'äöüÄÖÜ ':
+        elif type(key) == str and key in string.ascii_letters + string.digits + 'äöüÄÖÜ ':
             self.handle_generic_input(key)
         elif key == curses.KEY_MOUSE:
             _id, x, y, z, bstate = curses.getmouse()

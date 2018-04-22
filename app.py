@@ -105,19 +105,18 @@ class Application:
         self.exit()
 
     def handle_input(self, stdin):
-        k = self.screen.getch()
-        if k >= 0:
-            if k == curses.KEY_F1 or k == curses.KEY_F2:
-                self.widget_mgr.show_single_popup('Hilfe',
-                        'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
-            elif k == curses.KEY_F12:
-                self.show_about()
-            # admin menu is disabled in final app
-            #elif k == curses.KEY_F11 or k == curses.KEY_F9:
-            #    self.show_admin_screen()
-            else:
-                if not self.widget_mgr.handle_input(k):
-                    log.info("unhandled key '{}'".format(k))
+        k = self.screen.get_wch()
+        if k == curses.KEY_F1:
+            self.widget_mgr.show_single_popup('Hilfe',
+                    'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
+        elif k == curses.KEY_F12:
+            self.show_about()
+        # admin menu is disabled in final app
+        elif k == curses.KEY_F11:
+            self.show_admin_screen()
+        else:
+            if not self.widget_mgr.handle_input(k):
+                log.info("unhandled key '{}'".format(k))
 
     def handle_shot(self, _):
         self.shooting_range.target.shots_queue_available.clear()

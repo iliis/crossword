@@ -42,8 +42,8 @@ class Popup(WidgetBase):
 
     def handle_input(self, key):
         if   key == curses.KEY_LEFT  or key == curses.KEY_BTAB: self.selected_button -= 1
-        elif key == curses.KEY_RIGHT or key == ord('\t'):       self.selected_button += 1
-        elif key == curses.KEY_ENTER or key == ord(' ') or key == ord('\n') or key == ord('\r'):
+        elif key == curses.KEY_RIGHT or key == '\t':       self.selected_button += 1
+        elif key == curses.KEY_ENTER or key == ' ' or key == '\n' or key == '\r':
             if self.callback:
                 log.info('Popup: calling callback')
                 self.app.mi.send_packet({

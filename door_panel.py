@@ -45,7 +45,7 @@ class DoorPanel(WidgetBase):
         elif key == curses.KEY_RIGHT: self.cursor += 1
         elif key == curses.KEY_DOWN:  self.cursor += 1
         elif key == ord('\t'):        self.cursor += 1 # tab
-        elif key == curses.KEY_ENTER or key == ord(' ') or key == ord('\n') or key == ord('\r'):
+        elif key == curses.KEY_ENTER or key == ' ' or key == '\n' or key == '\r':
             self.toggle_door()
         else:
             return False # did not handle key, no need to update screen
