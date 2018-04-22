@@ -194,13 +194,8 @@ https://github.com/iliis/crossword
         self.widget_mgr.focus = self.focus_last
 
     def remaining_time(self):
-        diff = math.ceil(self.time_ends - time.time())
-        mins = int(diff / 60)
-        secs = int(diff - mins * 60)
-        if diff > 0:
-            return "{}:{:02d}".format(mins, secs)
-        else:
-            return "0:00"
+        diff = max(math.ceil(self.time_ends - time.time()), 0)
+        return time_format(diff)
 
     def reset(self):
         log.info("Resetting application!")

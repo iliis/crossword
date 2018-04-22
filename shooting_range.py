@@ -175,11 +175,13 @@ class ShootingRange(WidgetBase):
         # force render as we did not receive a regular input
         self.app.widget_mgr.render()
 
+    def total_points(self):
+        return int(sum([p for _, _, p in self.shots]))
+
+    def points_to_bonus_time(self):
+        total = min(self.total_points(), self.MAX_POINTS_FOR_BONUS)
+        return total / self.MAX_POINTS_FOR_BONUS * self.MAX_BONUS_TIME
+
     def remaining_time(self):
-        diff = math.ceil(self.time_started + self.TIMEOUT - time.time())
-        mins = int(diff / 60)
-        secs = int(diff - mins * 60)
-        if diff > 0:
-            return "{}:{:02d}".format(mins, secs)
-        else:
-            return "0:00"
+        diff = max(math.ceil(self.time_started + self.TIMEOUT - time.time()), 0)
+        return time_format(diff)

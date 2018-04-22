@@ -96,3 +96,7 @@ def layout_line(line, max_width):
         return lines
 
 
+def time_format(s):
+    mins = int(s / 60)
+    secs = int(s - mins * 60)
+    return "{:>2}m {:>02}s".format(mins, secs)
