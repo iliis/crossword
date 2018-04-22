@@ -1,9 +1,10 @@
-import logging
-import json
 import curses
+import json
+import logging
+import os
 import selectors
-import sys
 import serial
+import sys
 
 from helpers import *
 from crossword import Crossword
@@ -51,7 +52,8 @@ class Application:
         # register key handler
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.handle_input)
 
-        with open('puzzle.cfg', 'r') as puzzle_cfg:
+        puzzle_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'puzzle.cfg')
+        with open(puzzle_filename, 'r') as puzzle_cfg:
             cfg = json.load(puzzle_cfg)
             log.info("using configuration: {}".format(cfg))
             h, w = screen.getmaxyx()
