@@ -88,6 +88,7 @@ class Application:
         #self.widget_mgr.focus = self.door_panel
 
         self.shooting_range = ShootingRange(self)
+        self.shooting_range.visible = True
         self.widget_mgr.add(self.shooting_range)
         self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
         self.widget_mgr.focus = self.shooting_range
@@ -109,8 +110,9 @@ class Application:
                         'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
             elif k == curses.KEY_F12:
                 self.show_about()
-            elif k == curses.KEY_F11 or k == curses.KEY_F9:
-                self.show_admin_screen()
+            # admin menu is disabled in final app
+            #elif k == curses.KEY_F11 or k == curses.KEY_F9:
+            #    self.show_admin_screen()
             else:
                 if not self.widget_mgr.handle_input(k):
                     log.info("unhandled key '{}'".format(k))
