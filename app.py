@@ -5,6 +5,7 @@ import os
 import selectors
 import serial
 import sys
+import time
 
 from helpers import *
 from crossword import Crossword
@@ -48,6 +49,8 @@ class Application:
         self.mi.register_handler('ping', lambda _: None) # dummy command
 
         self.widget_mgr = WidgetManager(self)
+        self.TIMEOUT = 75 * 60
+        self.time_ends = time.time() + self.TIMEOUT
 
         # register key handler
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.handle_input)
@@ -68,15 +71,15 @@ class Application:
         try:
             self.puzzle.move(Vector(
                     int((w-ps.x)/2),
-                    int((h-ps.y+4)/2)
+                    int((h-ps.y+6)/2)
                     ))
         except Exception as e:
             raise Exception("Failed to move curses window. This can happen if your screen is too small!\nMaybe you forgot to switch to fullscreen?")
 
         self.progress_bar = ProgressBar(
                 self,
-                self.puzzle.pos() - Vector(0,4),
-                Vector(self.puzzle.size().x, 4),
+                self.puzzle.pos() - Vector(0,5),
+                Vector(self.puzzle.size().x, 5),
                 'Lösungsfortschritt:')
         self.puzzle.progress_bar = self.progress_bar
         self.puzzle.solved_callback = self.on_crossword_solved
@@ -189,6 +192,15 @@ https://github.com/iliis/crossword
     def on_shooting_range_closed(self, _):
         self.shooting_range.visible = False
         self.widget_mgr.focus = self.focus_last
+
+    def remaining_time(self):
+        diff = math.ceil(self.time_ends - time.time())
+        mins = int(diff / 60)
+        secs = int(diff - mins * 60)
+        if diff > 0:
+            return "{}:{:02d}".format(mins, secs)
+        else:
+            return "0:00"
 
     def reset(self):
         log.info("Resetting application!")

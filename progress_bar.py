@@ -32,6 +32,9 @@ class ProgressBar(WidgetBase):
         p_text = "{:3.0f}%".format(self.progress*100)
         self.screen.addstr(1, pw-len(p_text)-2, p_text, curses.A_BOLD)
 
+        self.screen.addstr(3, 2, 'Verbleibende Zeit: {}'.format(self.app.remaining_time()),
+                curses.A_NORMAL)
+
         # progress bar
         bar_width = pw - 4
         s = round(self.progress * bar_width)

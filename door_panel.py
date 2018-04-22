@@ -94,6 +94,8 @@ class DoorPanel(WidgetBase):
         #self.screen.clear()
         self.screen.border()
 
+        ph, pw = self.screen.getmaxyx()
+
         self.screen.addstr(3, 8,
                 'Stadtwache Ankh-Morpork: Türkontrollsystem',
                 curses.A_BOLD)
@@ -110,3 +112,6 @@ class DoorPanel(WidgetBase):
                     '   schliessen   ' if state else '     öffnen     ',
                     curses.A_BOLD | curses.color_pair(43)
                         if i == self.cursor else curses.color_pair(42))
+
+        self.screen.addstr(ph - 2, 8, 'Verbleibende Zeit: {}'.format(self.app.remaining_time()),
+                curses.A_NORMAL)

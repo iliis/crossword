@@ -1,5 +1,7 @@
 import curses
 import logging
+import time
+import threading
 
 from helpers import *
 from popup import Popup
@@ -13,6 +15,8 @@ class WidgetManager:
 
         self.widgets = []
         self.focus = None
+
+        self.periodic_refresh()
 
     def add(self, widget):
         self.widgets.append(widget)
@@ -61,3 +65,10 @@ class WidgetManager:
             widget.render()
 
         curses.doupdate()
+
+
+    def periodic_refresh(self):
+        # although 1 would be ideal, this will drift and thus we will have some
+        # values twice which does not look good.
+        threading.Timer(0.25, self.periodic_refresh).start()
+        self.render()

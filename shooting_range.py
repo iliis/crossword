@@ -37,7 +37,7 @@ class ShootingRangeState(Enum):
 
 class ShootingRange(WidgetBase):
     def __init__(self, app) -> None:
-        super(ShootingRange, self).__init__(app, Vector(0,0), Vector(100,35))
+        super(ShootingRange, self).__init__(app, Vector(0,0), Vector(100,37))
         self.center_in(app.screen)
 
         self.target = ReddotTarget() #("/dev/ttyUSB2")
@@ -48,7 +48,7 @@ class ShootingRange(WidgetBase):
 
         self.MAX_POS = 4500 # min/max X/Y coordinate returned by reddot target
         self.CIRCLE_RAD = 1500
-        self.SHOOTING_RANGE_TIMEOUT = 10
+        self.TIMEOUT = 10
 
         curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_WHITE) # bg white
         curses.init_pair(51, curses.COLOR_WHITE, curses.COLOR_RED)   # bg red
@@ -61,6 +61,7 @@ class ShootingRange(WidgetBase):
         self.state = ShootingRangeState.READY
         self.closed_callback = None
         self.first_shot_callback = None
+        self.time_started = 0
 
         self.shots = [] # type: List[Tuple[Vector, float, float]]
 
@@ -89,8 +90,9 @@ class ShootingRange(WidgetBase):
 
     def handle_shot(self, shot):
         if self.state == ShootingRangeState.READY:
-            threading.Timer(self.SHOOTING_RANGE_TIMEOUT, self.shooting_range_timeout).start()
+            threading.Timer(self.TIMEOUT, self.shooting_range_timeout).start()
             self.state = ShootingRangeState.ACTIVE
+            self.time_started = time.time()
             self.first_shot_callback()
         elif self.state == ShootingRangeState.DISABLED:
             # we are disabled and thus we discard all future shots
@@ -105,20 +107,22 @@ class ShootingRange(WidgetBase):
         self.shots.append( (pos, dist, points) )
 
     def draw(self) -> None:
-        self.screen.clear()
+        self.screen.erase()
         self.screen.border()
 
         # render target square
         for l in range(self.target_rect_size.y):
-            self.screen.addstr(l+1, 2, " "*self.target_rect_size.x, curses.color_pair(50))
+            self.screen.addstr(l+2, 2, " "*self.target_rect_size.x, curses.color_pair(50))
         # render target circle
-        o = Vector(1,0)+self.target_rect_size/2-self.target_point_diam/2
+        o = Vector(2,0)+self.target_rect_size/2-self.target_point_diam/2
         for line, text in enumerate(TARGET_CIRCLE):
             w = len([c for c in text if c != ' '])
             self.screen.addstr(int(line+o.y), int(o.x+self.target_point_diam.x/2-w/2), " "*w, curses.color_pair(51))
 
-        self.screen.addstr(2, self.target_rect_size.x+4, "Treffer:", curses.A_BOLD)
-        self.screen.addstr(3, self.target_rect_size.x+4, "Nr.:      Punkte.:", curses.A_BOLD)
+        self.screen.addstr(2, self.target_rect_size.x+4, "Verbleibende Zeit: {}".format(self.remaining_time()), curses.A_NORMAL)
+
+        self.screen.addstr(4, self.target_rect_size.x+4, "Treffer:", curses.A_BOLD)
+        self.screen.addstr(5, self.target_rect_size.x+4, "Nr.:      Punkte.:", curses.A_BOLD)
 
         self.screen.addstr(self.target_rect_size.y-2, self.target_rect_size.x+4, "Total:", curses.A_BOLD)
         self.screen.addstr(self.target_rect_size.y-2, self.target_rect_size.x+10,
@@ -155,7 +159,7 @@ class ShootingRange(WidgetBase):
             if nr < list_offset:
                 continue
 
-            self.screen.addstr(nr+4-list_offset, self.target_rect_size.x+4, " {:>3}.  {:>12}  ".format(nr+1, pts), tbl_flags)
+            self.screen.addstr(nr+6-list_offset, self.target_rect_size.x+4, " {:>3}.  {:>12}  ".format(nr+1, pts), tbl_flags)
 
         self.screen.addstr(1,2, 'Schiessstand', curses.A_BOLD)
         #self.screen.addstr(2,2, str(self.target.ser.port))
@@ -170,3 +174,12 @@ class ShootingRange(WidgetBase):
                 ['OK'])
         # force render as we did not receive a regular input
         self.app.widget_mgr.render()
+
+    def remaining_time(self):
+        diff = math.ceil(self.time_started + self.TIMEOUT - time.time())
+        mins = int(diff / 60)
+        secs = int(diff - mins * 60)
+        if diff > 0:
+            return "{}:{:02d}".format(mins, secs)
+        else:
+            return "0:00"
