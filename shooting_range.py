@@ -171,7 +171,7 @@ class ShootingRange(WidgetBase):
         self.shooting_range_state = ShootingRangeState.DISABLED
         self.app.widget_mgr.show_single_popup(
                 'Schiessstand beendet',
-                'Sie haben 0 Bonuszeit erhalten',
+                'Sie haben {} Bonuszeit erhalten'.format(self.points_to_bonus_time()),
                 self.closed_callback,
                 ['OK'])
         # force render as we did not receive a regular input
