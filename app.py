@@ -47,10 +47,11 @@ class Application:
         self.mi.register_handler('reset', lambda _: self.reset())
         self.mi.register_handler('show_popup', self.show_popup_from_packet)
         self.mi.register_handler('ping', lambda _: None) # dummy command
+        self.mi.register_handler('set_time', lambda p: self.set_timeout(p['timeout']))
 
         self.widget_mgr = WidgetManager(self)
-        self.TIMEOUT = 75 * 60
-        self.time_ends = time.time() + self.TIMEOUT
+
+        self.set_timeout(75 * 60)
 
         # register key handler
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.handle_input)
@@ -112,6 +113,10 @@ class Application:
 
     def __del__(self):
         self.exit()
+
+    def set_timeout(self, seconds):
+        self.TIMEOUT = seconds
+        self.time_ends = time.time() + self.TIMEOUT
 
     def handle_input(self, stdin):
         k = self.screen.get_wch()
