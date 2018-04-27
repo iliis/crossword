@@ -93,7 +93,7 @@ Commands
         'command': 'show_popup',
         'title':   'Hinweis',
         'text':    'Sie haben noch 5 Minuten Zeit übrig!',
-        'buttons': 'OK,BLA,BLUBB'
+        'buttons': ['OK','BLA','BLUBB']
     }
 ```
 
