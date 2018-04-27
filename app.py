@@ -72,7 +72,7 @@ class Application:
             self.puzzle.move(Vector(
                     int((w-ps.x)/2),
                     int((h-ps.y+6)/2)
-                    ))
+            ))
         except Exception as e:
             raise Exception("Failed to move curses window. This can happen if your screen is too small!\nMaybe you forgot to switch to fullscreen?")
 
