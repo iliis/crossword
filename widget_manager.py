@@ -70,6 +70,7 @@ class WidgetManager:
     def periodic_refresh(self):
         # although 1 would be ideal, this will drift and thus we will have some
         # values twice which does not look good.
+        # TODO: In which context does this call our function? This might introduce multithreading-issues!
         t = threading.Timer(0.25, self.periodic_refresh)
         t.daemon = True # kill when main thread exits
         t.start()

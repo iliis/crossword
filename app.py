@@ -55,6 +55,7 @@ class Application:
         self.mi.register_handler('show_popup', self.show_popup_from_packet)
         self.mi.register_handler('ping', lambda _: None) # dummy command
         self.mi.register_handler('set_time', lambda p: self.set_timeout(p['timeout']))
+        self.mi.register_handler('show_shooting_range', lambda _: self.show_shooting_range())
 
         self.widget_mgr = WidgetManager(self)
 
@@ -100,7 +101,7 @@ class Application:
 
         self.shooting_range = ShootingRange(self)
         self.widget_mgr.add(self.shooting_range)
-        self.shooting_range.first_shot_callback = self.on_shooting_range_first_shot
+        self.shooting_range.first_shot_callback = self.show_shooting_range
         self.shooting_range.closed_callback = self.on_shooting_range_closed
         self.shooting_range.visible = False
         #self.widget_mgr.focus = self.shooting_range
@@ -202,10 +203,14 @@ https://github.com/iliis/crossword
         self.door_panel.visible = True
         self.widget_mgr.focus = self.door_panel
 
-    def on_shooting_range_first_shot(self):
-        self.shooting_range.visible = True
-        self.focus_last = self.widget_mgr.focus
-        self.widget_mgr.focus = self.shooting_range
+    def show_shooting_range(self):
+        if not self.shooting_range.visible:
+            if self.shooting_range.state == ShootingRangeState.NOT_WORKING:
+                raise Exception("Cannot start shooting range: Target is not working.")
+            else:
+                self.shooting_range.visible = True
+                self.focus_last = self.widget_mgr.focus
+                self.widget_mgr.focus = self.shooting_range
 
     def on_shooting_range_closed(self, _):
         self.shooting_range.visible = False
