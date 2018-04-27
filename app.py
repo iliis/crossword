@@ -15,6 +15,13 @@ from management_interface import ManagementInterface
 from widget_manager import WidgetManager
 from shooting_range import ShootingRange
 
+
+# make sure logfile doesn't grow unboundedly
+if os.path.getsize("puzzle.log") > 1024*1024*10: # limit: 10MB
+    print("deleting huge logfile")
+    os.remove("puzzle.log")
+
+
 log = logging.getLogger('puzzle')
 hdlr = logging.FileHandler('puzzle.log')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
