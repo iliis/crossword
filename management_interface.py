@@ -67,8 +67,7 @@ class ManagementInterface:
         self.server_sock.listen()
         self.server_sock.setblocking(False)
         self.selector.register(self.server_sock, selectors.EVENT_READ, self.accept)
-        log.info('started server on TODO:my ip')
-        # TODO: write it to screen!
+        log.info('started server on port {}'.format(port))
 
         self.data_buffer = {}
         self.connections = []
@@ -82,7 +81,7 @@ class ManagementInterface:
         self.handlers[command] = handler
 
     def __del__(self):
-        #log.info('closing server connection')
+        log.info('closing server connection')
         self.server_sock.shutdown(socket.SHUT_RDWR)
         self.server_sock.close()
         for conn in self.connections:

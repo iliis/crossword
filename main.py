@@ -1,4 +1,5 @@
 #!/bin/env python3
+import threading
 import curses
 import signal
 import traceback
@@ -48,7 +49,10 @@ if __name__ == '__main__':
 
         print("")
         print("")
-        log.info("waiting for user to press a key...")
         input("Press [ENTER] to quit")
+        log.info("exiting...")
+
+        #for t in threading.enumerate():
+            #print("thread", t.name, ": ", t, "daemon?", t.daemon)
     else:
         log.info("exited cleanly")

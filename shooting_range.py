@@ -98,7 +98,9 @@ class ShootingRange(WidgetBase):
 
     def handle_shot(self, shot):
         if self.state == ShootingRangeState.READY:
-            threading.Timer(self.TIMEOUT, self.shooting_range_timeout).start()
+            t = threading.Timer(self.TIMEOUT, self.shooting_range_timeout)
+            t.daemon = True # kill when main thread exits
+            t.start()
             self.state = ShootingRangeState.ACTIVE
             self.time_started = time.time()
             self.first_shot_callback()

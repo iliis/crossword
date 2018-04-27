@@ -46,6 +46,7 @@ class ReddotTarget(threading.Thread):
         self.shots_queue_available = WaitableEvent() # we cannot use select() with a queue :(
 
         self.is_running = True
+        self.daemon = True # auto-kill when main thread exits
 
     def poll(self):
         self.ser.write([5])
