@@ -33,15 +33,22 @@ class ShootingRangeState(Enum):
     READY = 0
     ACTIVE = 1
     DISABLED = 2
+    NOT_WORKING = 3
 
 
 class ShootingRange(WidgetBase):
     def __init__(self, app) -> None:
         super(ShootingRange, self).__init__(app, Vector(0,0), Vector(102,37))
         self.center_in(app.screen)
+        self.state = ShootingRangeState.READY
 
-        self.target = ReddotTarget() #("/dev/ttyUSB2")
-        self.target.start() # start asynchronous thread which polls the target
+        try:
+            self.target = ReddotTarget() #("/dev/ttyUSB2")
+            self.target.start() # start asynchronous thread which polls the target
+        except ReddotTarget.AutodetectFailedException as e:
+            log.error(str(e))
+            self.target = None
+            self.state = ShootingRangeState.NOT_WORKING
 
         self.target_rect_size  = Vector(70,33)
         self.target_point_diam = Vector(len(TARGET_CIRCLE[0]), len(TARGET_CIRCLE))
@@ -60,7 +67,6 @@ class ShootingRange(WidgetBase):
 
         curses.init_pair(54, curses.COLOR_YELLOW, curses.COLOR_BLACK) # points total
 
-        self.state = ShootingRangeState.READY
         self.closed_callback = None
         self.first_shot_callback = None
         self.time_started = 0

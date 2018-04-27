@@ -92,11 +92,17 @@ class Application:
 
         self.shooting_range = ShootingRange(self)
         self.widget_mgr.add(self.shooting_range)
-        self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
         self.shooting_range.first_shot_callback = self.on_shooting_range_first_shot
         self.shooting_range.closed_callback = self.on_shooting_range_closed
         self.shooting_range.visible = False
         #self.widget_mgr.focus = self.shooting_range
+
+        if self.shooting_range.target is None:
+            self.widget_mgr.show_popup("Schwerwiegender Fehler", "Konnte keine Verbindung zum Reddot-Target aufbauen. "
+                    "Schiessstand ist deaktiviert, keine Bonuszeit erschiessbar. "
+                    "Dies sollte nicht passieren, bitte melden Sie diesen Fehler der Spielleitung.")
+        else:
+            self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
 
         """
         self.widget_mgr.show_popup('Dies ist der Titel',

@@ -12,6 +12,9 @@ from waitable_event import WaitableEvent
 log = logging.getLogger('puzzle')
 
 class ReddotTarget(threading.Thread):
+    class AutodetectFailedException(Exception):
+        pass
+
     def __init__(self, port=None):
         if port == None:
             # try to autodetect port
@@ -33,7 +36,7 @@ class ReddotTarget(threading.Thread):
                     port = p.device
                     break
             else:
-                raise Exception("Serialport autodetection failed! Is the reddot-target connected?")
+                raise ReddotTarget.AutodetectFailedException("Serialport autodetection failed! Is the reddot-target connected?")
 
         self.ser = serial.Serial(port=port, baudrate=9600, timeout=0.3)
 
