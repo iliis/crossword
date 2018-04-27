@@ -25,6 +25,16 @@ class Popup(WidgetBase):
 
         size = Vector(self.width+4, self.height+4)
 
+        """
+        log.info("creating popup with title '{}'".format(title))
+        log.info("layouted text: '{}'".format(self.layout_text))
+        log.info("parent size: {}".format(parent_size))
+        log.info("own size: {}".format(size))
+        log.info("pos: {}".format(parent_size/2-size/2))
+        log.info("button len: {} {}".format(len(buttons), button_w))
+        log.info("max line len: {}".format(max(len(l)for l in self.layout_text)))
+        """
+
         # center in middle of parent
         super(Popup, self).__init__(app, parent_size/2-size/2, size)
 
