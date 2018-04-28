@@ -222,6 +222,7 @@ https://github.com/iliis/crossword
     def on_shooting_range_closed(self, _):
         self.shooting_range.visible = False
         self.widget_mgr.focus = self.focus_last
+        self.time_ends += self.shooting_range.points_to_bonus_time()
 
     def remaining_time(self):
         diff = max(math.ceil(self.time_ends - time.time()), 0)
@@ -235,6 +236,8 @@ https://github.com/iliis/crossword
         self.door_panel.reset()
         self.door_panel.visible = False
         self.shooting_range.visible = False
+        self.shooting_range.reset()
+        self.set_timeout(75 * 60)
 
         self.widget_mgr.focus = self.puzzle
 

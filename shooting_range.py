@@ -93,6 +93,12 @@ class ShootingRange(WidgetBase):
         #    (Vector(0, 0), 0, 0),
         #])
 
+    def reset(self):
+        self.shots = []
+        self.time_started = 0
+        if self.state != ShootingRangeState.NOT_WORKING:
+            self.state = ShootingRangeState.READY
+
     def handle_input(self, key):
         pass
 
