@@ -134,8 +134,8 @@ class Application:
         elif k == curses.KEY_F12:
             self.show_about()
         # admin menu is disabled in final app
-        #elif k == curses.KEY_F11:
-        #    self.show_admin_screen()
+        elif k == curses.KEY_F9:
+            self.widget_mgr.show_input("Management Terminal", "Bitte Passwort eingeben:", self.show_admin_screen, True)
         else:
             if not self.widget_mgr.handle_input(k):
                 log.info("unhandled key '{}'".format(k))
@@ -153,14 +153,21 @@ Diese Software ist frei verfügbar unter der GPL. Quellcode unter
 https://github.com/iliis/crossword
 """)
 
-    def show_admin_screen(self):
-        self.widget_mgr.show_single_popup('Admin',
-                'Serial Port: {}\n\n'.format(self.shooting_range.target.ser.name)
-                +'Local Address:\n{}\n'.format('\n'.join(' - {}'.format(a) for a in self.mi.get_local_addresses()))
-                +'Local Port: {}\n'.format(self.mi.port)
-                +'Remote Control Connections:\n{}\n'.format('\n'.join(' - {}'.format(c.getpeername()) for c in self.mi.connections)),
-                callback=self._admin_screen_cb,
-                buttons=['CLOSE', 'AUTOFILL', 'RESET ALL', 'EXIT APP'])
+    def show_admin_screen(self, pw):
+        if pw == "ehrichweiss":
+            ser_port = "not connected"
+            if self.shooting_range.target is not None:
+                ser_port = self.shooting_range.target.ser.name
+
+            self.widget_mgr.show_single_popup('Admin',
+                    'Serial Port: {}\n\n'.format(ser_port)
+                    +'Local Address:\n{}\n'.format('\n'.join(' - {}'.format(a) for a in self.mi.get_local_addresses()))
+                    +'Local Port: {}\n'.format(self.mi.port)
+                    +'Remote Control Connections:\n{}\n'.format('\n'.join(' - {}'.format(c.getpeername()) for c in self.mi.connections)),
+                    callback=self._admin_screen_cb,
+                    buttons=['CLOSE', 'AUTOFILL', 'RESET ALL', 'EXIT APP'])
+        else:
+            self.widget_mgr.show_single_popup('Passwort Falsch', 'Die Management Konsole ist nur für die Spielleitung gedacht, sorry.')
 
     def _admin_screen_cb(self, button):
         if button == 'EXIT APP':
@@ -181,7 +188,7 @@ https://github.com/iliis/crossword
         # trigger another exception when trying to set this variable. To
         # protect against this, let's check if the member variable exists
         # before accessing it
-        if hasattr(self, 'shooting_range'):
+        if hasattr(self, 'shooting_range') and self.shooting_range.target is not None:
             self.shooting_range.target.is_running = False
 
     def show_popup_from_packet(self, packet):

@@ -5,6 +5,7 @@ import threading
 
 from helpers import *
 from popup import Popup
+from input_popup import InputPopup
 
 log = logging.getLogger('puzzle')
 
@@ -32,7 +33,14 @@ class WidgetManager:
             self.show_popup(*args, **kwargs)
 
     def show_popup(self, title, text, callback=None, buttons=['OK']):
-        popup = Popup(self.app, self.screen, title, text, buttons)
+        return self.show_popup_obj(Popup(self.app, self.screen, title, text, buttons), title, text, callback)
+
+    def show_input(self, title, text, callback=None, is_password_input=False):
+        p = self.show_popup_obj(InputPopup(self.app, self.screen, title, text), title, text, callback)
+        p.is_password_input = is_password_input
+        return p
+
+    def show_popup_obj(self, popup, title, text, callback=None):
         self.add(popup)
 
         old_focus = self.focus # save focus at time of popup call
@@ -59,6 +67,7 @@ class WidgetManager:
             self.screen.clear()
 
         popup.callback = wrapped_callback
+        return popup
 
     def render(self):
         for widget in self.widgets:

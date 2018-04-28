@@ -26,14 +26,11 @@ if __name__ == '__main__':
     log.info("starting application")
     ex, bt = curses.wrapper(main)
 
-    log.info("back in main")
-
     if ex is not None:
-        log.info("clearing screen etc.")
-        curses.endwin()
-        # try to display it on screen
+        # try to display exception on screen
 
-        # manually sending ANSI escape codes is not enough :(
+        curses.endwin() # this doesn't really work somehow :(
+        # and manually sending ANSI escape codes is not enough :(
         os.system("clear")
         os.system("reset")
         os.system("stty sane")
@@ -50,7 +47,7 @@ if __name__ == '__main__':
         print("")
         print("")
         input("Press [ENTER] to quit")
-        log.info("exiting...")
+        log.info("exiting after exception")
 
         #for t in threading.enumerate():
             #print("thread", t.name, ": ", t, "daemon?", t.daemon)

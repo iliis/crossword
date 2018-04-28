@@ -18,7 +18,7 @@ class Door:
 class DoorPanel(WidgetBase):
 
     def __init__(self, app):
-        super(DoorPanel, self).__init__(app, Vector(0,0), Vector(59,14))
+        super(DoorPanel, self).__init__(app, Vector(0,0), Vector(59,16))
 
         curses.init_pair(40, curses.COLOR_RED,   curses.COLOR_BLACK)
         curses.init_pair(41, curses.COLOR_GREEN, curses.COLOR_BLACK)
@@ -113,5 +113,5 @@ class DoorPanel(WidgetBase):
                     curses.A_BOLD | curses.color_pair(43)
                         if i == self.cursor else curses.color_pair(42))
 
-        self.screen.addstr(ph - 2, 8, 'Verbleibende Zeit: {}'.format(self.app.remaining_time()),
+        self.screen.addstr(ph - 3, 8, 'Verbleibende Zeit: {}'.format(self.app.remaining_time()),
                 curses.A_NORMAL)
