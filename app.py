@@ -6,6 +6,7 @@ import selectors
 import serial
 import sys
 import time
+import threading
 
 from helpers import *
 from crossword import Crossword
@@ -13,7 +14,7 @@ from progress_bar import ProgressBar
 from door_panel import DoorPanel
 from management_interface import ManagementInterface
 from widget_manager import WidgetManager
-from shooting_range import ShootingRange
+from shooting_range import ShootingRange, ShootingRangeState
 
 
 # make sure logfile doesn't grow unboundedly
@@ -59,7 +60,7 @@ class Application:
 
         self.widget_mgr = WidgetManager(self)
 
-        self.set_timeout(75 * 60)
+        self.set_timeout(2) #75 * 60)
 
         # register key handler
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.handle_input)
@@ -125,6 +126,23 @@ class Application:
     def set_timeout(self, seconds):
         self.TIMEOUT = seconds
         self.time_ends = time.time() + self.TIMEOUT
+        self.timeout_timer = threading.Timer(self.TIMEOUT, self.on_timeout)
+        self.timeout_timer.daemon = True
+        self.timeout_timer.start()
+
+    def on_timeout(self):
+        log.info("main application timeout!")
+        self.mi.send_packet({
+            'event': 'main_timeout',
+        })
+
+        self.puzzle.visible = False
+        self.shooting_range.visible = False
+        self.door_panel.visible = False
+        self.screen.clear()
+        self.screen.refresh()
+        self.widget_mgr.show_popup("Zeit Abgelaufen", "Ihre Zeit ist leider rum. Bitte begeben Sie sich zum Ausgang.\nFreundlichst, Ihre Spielleitung")
+        self.widget_mgr.render()
 
     def handle_input(self, stdin):
         k = self.screen.get_wch()
@@ -165,7 +183,7 @@ https://github.com/iliis/crossword
                     +'Local Port: {}\n'.format(self.mi.port)
                     +'Remote Control Connections:\n{}\n'.format('\n'.join(' - {}'.format(c.getpeername()) for c in self.mi.connections)),
                     callback=self._admin_screen_cb,
-                    buttons=['CLOSE', 'AUTOFILL', 'RESET ALL', 'EXIT APP'])
+                    buttons=['CLOSE', 'AUTOFILL', 'SHOW SRANGE', 'RESET ALL', 'EXIT APP'])
         else:
             self.widget_mgr.show_single_popup('Passwort Falsch', 'Die Management Konsole ist nur für die Spielleitung gedacht, sorry.')
 
@@ -177,6 +195,8 @@ https://github.com/iliis/crossword
             self.reset()
         elif button == 'AUTOFILL':
             self.puzzle.autofill()
+        elif button == 'SHOW SRANGE':
+            self.show_shooting_range()
 
     def exit_app_by_packet(self, packet):
         log.info("Exiting application trough remote command.")
@@ -236,6 +256,7 @@ https://github.com/iliis/crossword
         self.door_panel.reset()
         self.door_panel.visible = False
         self.shooting_range.visible = False
+        self.puzzle.visible = True
         self.shooting_range.reset()
         self.set_timeout(75 * 60)
 

@@ -72,6 +72,7 @@ class ShootingRange(WidgetBase):
         self.time_started = 0
 
         self.shots = [] # type: List[Tuple[Vector, float, float]]
+        self.timeout_timer = None # type: threading.Timer
 
         #for i in range(25):
             #self.shots.append(
@@ -98,15 +99,17 @@ class ShootingRange(WidgetBase):
         self.time_started = 0
         if self.state != ShootingRangeState.NOT_WORKING:
             self.state = ShootingRangeState.READY
+        if self.timeout_timer is not None:
+            self.timeout_timer.cancel()
 
     def handle_input(self, key):
         pass
 
     def handle_shot(self, shot):
         if self.state == ShootingRangeState.READY:
-            t = threading.Timer(self.TIMEOUT, self.shooting_range_timeout)
-            t.daemon = True # kill when main thread exits
-            t.start()
+            self.timeout_timer = threading.Timer(self.TIMEOUT, self.shooting_range_timeout)
+            self.timeout_timer.daemon = True # kill when main thread exits
+            self.timeout_timer.start()
             self.state = ShootingRangeState.ACTIVE
             self.time_started = time.time()
             self.first_shot_callback()
