@@ -134,10 +134,11 @@ class ManagementInterface:
         data = json.dumps(payload, cls=EnumEncoder)
         return "{}\n{}\n".format(len(data), data).encode('utf8')
 
-    def reply_success(self, orig_pkt):
+    def reply_success(self, orig_pkt, data=None):
         return {
                 'command':  'reply',
                 'retval':   'success',
+                'data':     data,
                 'reply_to': orig_pkt,
                 }
 

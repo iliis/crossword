@@ -57,10 +57,11 @@ class Application:
         self.mi.register_handler('ping', lambda _: None) # dummy command
         self.mi.register_handler('set_time', lambda p: self.set_timeout(p['timeout']))
         self.mi.register_handler('show_shooting_range', lambda _: self.show_shooting_range())
+        self.mi.register_handler('get_time', lambda p: self.mi.reply_success(p, self.remaining_time()))
 
         self.widget_mgr = WidgetManager(self)
 
-        self.set_timeout(2) #75 * 60)
+        self.set_timeout(75 * 60)
 
         # register key handler
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.handle_input)

@@ -9,7 +9,7 @@ class WidgetBase:
     def __init__(self, app, pos: Vector, size: Vector) -> None:
         self.app = app
         # create new screen for yourself
-        log.info("creating new widget, pos: {}, size: {}".format(pos, size))
+        #log.info("creating new widget, pos: {}, size: {}".format(pos, size))
         self.screen = curses.newwin(int(size.y), int(size.x), int(pos.y), int(pos.x))
         self.visible = True
 
@@ -20,7 +20,7 @@ class WidgetBase:
         sh, sw = self.screen.getmaxyx()
         size = Vector(sw, sh)
 
-        log.info("centering in parent p={}, screen={}".format(parent_size, size))
+        #log.info("centering in parent p={}, screen={}".format(parent_size, size))
 
         # center in middle of parent
         self.move(parent_size/2-size/2)
@@ -37,7 +37,7 @@ class WidgetBase:
         self.screen.resize(int(new_size.y), int(new_size.x))
 
     def move(self, new_pos):
-        log.info("moving window to {}".format(new_pos))
+        #log.info("moving window to {}".format(new_pos))
         self.screen.mvwin(int(new_pos.y), int(new_pos.x))
 
     def draw(self):

@@ -4,6 +4,7 @@ import curses
 import signal
 import traceback
 import os
+import sys
 
 from app import Application, log
 
@@ -51,5 +52,7 @@ if __name__ == '__main__':
 
         #for t in threading.enumerate():
             #print("thread", t.name, ": ", t, "daemon?", t.daemon)
+        sys.exit(-1)
     else:
         log.info("exited cleanly")
+        sys.exit(0)
