@@ -4,6 +4,7 @@ import logging
 import os
 import selectors
 import serial
+import subprocess
 import sys
 import time
 import threading
@@ -52,6 +53,7 @@ class Application:
         log.info("local address: {}".format(self.mi.get_local_addresses()))
 
         self.mi.register_handler('quit', self.exit_app_by_packet)
+        self.mi.register_handler('shutdown', self.shutdown)
         self.mi.register_handler('reset', lambda _: self.reset())
         self.mi.register_handler('show_popup', self.show_popup_from_packet)
         self.mi.register_handler('ping', lambda _: None) # dummy command
@@ -248,6 +250,10 @@ https://github.com/iliis/crossword
     def remaining_time(self):
         diff = max(math.ceil(self.time_ends - time.time()), 0)
         return time_format(diff)
+
+    def shutdown(self, packet):
+        log.info("Shutting down PC!!")
+        subprocess.call(["sudo", "halt"])
 
     def reset(self):
         log.info("Resetting application!")
