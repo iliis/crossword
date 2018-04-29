@@ -15,7 +15,7 @@ from door_panel import DoorPanel
 from management_interface import ManagementInterface
 from widget_manager import WidgetManager
 from shooting_range import ShootingRange, ShootingRangeState
-
+from waitable_timer import WaitableTimer
 
 # make sure logfile doesn't grow unboundedly
 if os.path.getsize("puzzle.log") > 1024*1024*10: # limit: 10MB
@@ -61,7 +61,9 @@ class Application:
 
         self.widget_mgr = WidgetManager(self)
 
-        self.set_timeout(75 * 60)
+        self.TIMEOUT = 75*60
+        self.timeout_timer = WaitableTimer(self.sel, self.TIMEOUT, self.on_timeout)
+        self.set_timeout(self.TIMEOUT)
 
         # register key handler
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.handle_input)
@@ -127,8 +129,7 @@ class Application:
     def set_timeout(self, seconds):
         self.TIMEOUT = seconds
         self.time_ends = time.time() + self.TIMEOUT
-        self.timeout_timer = threading.Timer(self.TIMEOUT, self.on_timeout)
-        self.timeout_timer.daemon = True
+        self.timeout_timer.reset(self.TIMEOUT) # stop any running timer (if any) and set new timeout
         self.timeout_timer.start()
 
     def on_timeout(self):

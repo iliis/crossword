@@ -9,6 +9,7 @@ from typing import List, Tuple
 
 from widget import WidgetBase
 from reddot_target import ReddotTarget
+from waitable_timer import WaitableTimer
 
 from helpers import *
 log = logging.getLogger('puzzle')
@@ -72,7 +73,7 @@ class ShootingRange(WidgetBase):
         self.time_started = 0
 
         self.shots = [] # type: List[Tuple[Vector, float, float]]
-        self.timeout_timer = None # type: threading.Timer
+        self.timeout_timer = WaitableTimer(self.app.sel, self.TIMEOUT, self.shooting_range_timeout)
 
         #for i in range(25):
             #self.shots.append(
@@ -99,16 +100,13 @@ class ShootingRange(WidgetBase):
         self.time_started = 0
         if self.state != ShootingRangeState.NOT_WORKING:
             self.state = ShootingRangeState.READY
-        if self.timeout_timer is not None:
-            self.timeout_timer.cancel()
+        self.timeout_timer.reset(self.TIMEOUT)
 
     def handle_input(self, key):
         pass
 
     def handle_shot(self, shot):
         if self.state == ShootingRangeState.READY:
-            self.timeout_timer = threading.Timer(self.TIMEOUT, self.shooting_range_timeout)
-            self.timeout_timer.daemon = True # kill when main thread exits
             self.timeout_timer.start()
             self.state = ShootingRangeState.ACTIVE
             self.time_started = time.time()
