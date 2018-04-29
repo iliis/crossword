@@ -104,8 +104,19 @@ class Crossword(WidgetBase):
         elif key == curses.KEY_BTAB:  self.cursor_to_next_word(-1) # shift-tab
         elif key == curses.KEY_HOME:  self.cursor_home()
         elif key == curses.KEY_END:   self.cursor_end()
-        elif type(key) == str and key in string.ascii_letters + string.digits + 'äöüÄÖÜ ':
+        elif type(key) == str and key in string.ascii_letters + string.digits:
             self.handle_generic_input(key)
+        elif type(key) == str and key in 'äöüÄÖÜ':
+            if key == 'ä' or key == 'Ä':
+                self.handle_generic_input('A')
+                self.handle_generic_input('E')
+            elif key == 'ö' or key == 'Ö':
+                self.handle_generic_input('O')
+                self.handle_generic_input('E')
+            elif key == 'ü' or key == 'Ü':
+                self.handle_generic_input('U')
+                self.handle_generic_input('E')
+
         elif key == curses.KEY_MOUSE:
             _id, x, y, z, bstate = curses.getmouse()
             self.handle_mouse_input(x,y,bstate)
@@ -318,8 +329,8 @@ class Crossword(WidgetBase):
             else:
                 attr = curses.A_NORMAL
 
-            self.screen.addstr(self.margin_y + n*(self.cell_h+1) + 1,               self.margin_x, "{}.".format(n+1), attr)
-            self.screen.addstr(self.margin_y + self.height*(self.cell_h+1) + 2 + n, self.margin_x, "{}. {}".format(n+1, desc), attr)
+            self.screen.addstr(self.margin_y + n*(self.cell_h+1) + 1,               self.margin_x, "{:>2}.".format(n+1), attr)
+            self.screen.addstr(self.margin_y + self.height*(self.cell_h+1) + 2 + n, self.margin_x, "{:>2}. {}".format(n+1, desc), attr)
 
         # draw user input
         for n, ((word, offset, desc), user_input, (word_state, char_state)) in enumerate(zip(self.words, self.puzzle_input, self.validate_input())):
