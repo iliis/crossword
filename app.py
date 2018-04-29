@@ -16,6 +16,7 @@ from management_interface import ManagementInterface
 from widget_manager import WidgetManager
 from shooting_range import ShootingRange, ShootingRangeState
 from waitable_timer import WaitableTimer
+from final_screen import FinalScreen
 
 # make sure logfile doesn't grow unboundedly
 if os.path.getsize("puzzle.log") > 1024*1024*10: # limit: 10MB
@@ -61,7 +62,7 @@ class Application:
 
         self.widget_mgr = WidgetManager(self)
 
-        self.TIMEOUT = 75*60
+        self.TIMEOUT = 3 #75*60
         self.timeout_timer = WaitableTimer(self.sel, self.TIMEOUT, self.on_timeout)
         self.set_timeout(self.TIMEOUT)
 
@@ -117,11 +118,9 @@ class Application:
         else:
             self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
 
-        """
-        self.widget_mgr.show_popup('Dies ist der Titel',
-                "asdfa sfasdfdsaf;dsa kfsa;dkfjdsa;if jsa;ifjsa dfijdsfoisdhaf " +'%'*40+ " uhsaif usahd end of first line\nsecond line here\nand a third " + "#"*250,
-                lambda b: log.info('selected {}'.format(b)), ['foo', 'bar', 'baz'])
-                """
+        self.final_screen = FinalScreen(self)
+        self.final_screen.visible = False
+        self.widget_mgr.add(self.final_screen)
 
     def __del__(self):
         self.exit()
@@ -141,6 +140,7 @@ class Application:
         self.puzzle.visible = False
         self.shooting_range.visible = False
         self.door_panel.visible = False
+        self.final_screen.visible = True
         self.screen.clear()
         self.screen.refresh()
         self.widget_mgr.show_popup("Zeit Abgelaufen", "Ihre Zeit ist leider rum. Bitte begeben Sie sich zum Ausgang.\nFreundlichst, Ihre Spielleitung")
@@ -258,9 +258,10 @@ https://github.com/iliis/crossword
         self.door_panel.reset()
         self.door_panel.visible = False
         self.shooting_range.visible = False
-        self.puzzle.visible = True
         self.shooting_range.reset()
-        self.set_timeout(75 * 60)
+        self.puzzle.visible = True
+        self.final_screen.visible = False
+        self.set_timeout(self.TIMEOUT)
 
         self.widget_mgr.focus = self.puzzle
 
