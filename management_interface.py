@@ -181,9 +181,17 @@ class ManagementInterface:
             reply = self.reply_failure(payload, err)
 
         log.info("sending reply: '{}'".format(repr(reply)))
-        conn.sendall(self.encode_packet(reply))
+        try:
+            conn.sendall(self.encode_packet(reply))
+        except Exception as e:
+            log.error("sendall() failed; got Exception:\n{}\n{}".format(e, traceback.format_exc()))
+            self.connections.remove(conn)
 
     def send_packet(self, payload):
         pkt = self.encode_packet(payload)
-        for conn in self.connections:
-            conn.sendall(pkt)
+        for conn in self.connections[:]:
+            try:
+                conn.sendall(pkt)
+            except Exception as e:
+                log.error("sendall() failed; got Exception:\n{}\n{}".format(e, traceback.format_exc()))
+                self.connections.remove(conn)
