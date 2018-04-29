@@ -45,7 +45,6 @@ if __name__ == '__main__':
         print("Backtrace:")
         print(bt)
 
-        # TODO: stop all running timers
         log.info("exiting after exception")
 
         #for t in threading.enumerate():

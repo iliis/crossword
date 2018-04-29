@@ -149,8 +149,7 @@ class Application:
     def handle_input(self, stdin):
         k = self.screen.get_wch()
         if k == curses.KEY_F1:
-            self.widget_mgr.show_single_popup('Hilfe',
-                    'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
+            self.show_help()
         elif k == curses.KEY_F12:
             self.show_about()
         # admin menu is disabled in final app
@@ -249,6 +248,11 @@ https://github.com/iliis/crossword
     def remaining_time(self):
         diff = max(math.ceil(self.time_ends - time.time()), 0)
         return time_format(diff)
+
+    def show_help(self):
+        # TODO: write help screen
+        self.widget_mgr.show_single_popup('Hilfe',
+                'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
 
     def reset(self):
         log.info("Resetting application!")
