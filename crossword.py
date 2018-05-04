@@ -32,6 +32,7 @@ class Crossword(WidgetBase):
         self.width  = cfg['width']
         self.height = cfg['height']
         self.words  = cfg['words']
+        self.words_init = cfg['init_words']
         self.solution_col = cfg['solution_column']
 
         self.grid = GridRenderer(self.width, self.height)
@@ -76,6 +77,12 @@ class Crossword(WidgetBase):
 
         # user input is stored here
         self.puzzle_input = [ [' '] * len(word) for word, _, _ in self.words ]
+
+        for i in range(len(self.words)):
+            k = str(i)
+            if k in self.words_init:
+                assert(len(self.words[i][0]) == len(self.words_init[k]))
+                self.puzzle_input[i] = [c for c in self.words_init[k]]
 
         self.notify_state_update('reset')
 
