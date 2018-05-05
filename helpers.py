@@ -55,7 +55,7 @@ def layout_line(line, max_width):
         return [line]
     else:
         # find optimal break-points
-        log.info('fitting line "{}" into {} characters'.format(line, max_width))
+        #log.info('fitting line "{}" into {} characters'.format(line, max_width))
         lines = []
         cur_line = ""
 

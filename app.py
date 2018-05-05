@@ -16,7 +16,8 @@ from door_panel import DoorPanel
 from management_interface import ManagementInterface
 from widget_manager import WidgetManager
 from shooting_range import ShootingRange, ShootingRangeState
-
+from waitable_timer import WaitableTimer
+from final_screen import FinalScreen
 
 # make sure logfile doesn't grow unboundedly
 if os.path.getsize("puzzle.log") > 1024*1024*10: # limit: 10MB
@@ -63,7 +64,9 @@ class Application:
 
         self.widget_mgr = WidgetManager(self)
 
-        self.set_timeout(75 * 60)
+        self.TIMEOUT = 75*60
+        self.timeout_timer = WaitableTimer(self.sel, self.TIMEOUT, self.on_timeout)
+        self.set_timeout(self.TIMEOUT)
 
         # register key handler
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.handle_input)
@@ -117,11 +120,9 @@ class Application:
         else:
             self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
 
-        """
-        self.widget_mgr.show_popup('Dies ist der Titel',
-                "asdfa sfasdfdsaf;dsa kfsa;dkfjdsa;if jsa;ifjsa dfijdsfoisdhaf " +'%'*40+ " uhsaif usahd end of first line\nsecond line here\nand a third " + "#"*250,
-                lambda b: log.info('selected {}'.format(b)), ['foo', 'bar', 'baz'])
-                """
+        self.final_screen = FinalScreen(self)
+        self.final_screen.visible = False
+        self.widget_mgr.add(self.final_screen)
 
     def __del__(self):
         self.exit()
@@ -129,8 +130,7 @@ class Application:
     def set_timeout(self, seconds):
         self.TIMEOUT = seconds
         self.time_ends = time.time() + self.TIMEOUT
-        self.timeout_timer = threading.Timer(self.TIMEOUT, self.on_timeout)
-        self.timeout_timer.daemon = True
+        self.timeout_timer.reset(self.TIMEOUT) # stop any running timer (if any) and set new timeout
         self.timeout_timer.start()
 
     def on_timeout(self):
@@ -142,6 +142,7 @@ class Application:
         self.puzzle.visible = False
         self.shooting_range.visible = False
         self.door_panel.visible = False
+        self.final_screen.visible = True
         self.screen.clear()
         self.screen.refresh()
         self.widget_mgr.show_popup("Zeit Abgelaufen", "Ihre Zeit ist leider rum. Bitte begeben Sie sich zum Ausgang.\nFreundlichst, Ihre Spielleitung")
@@ -150,8 +151,7 @@ class Application:
     def handle_input(self, stdin):
         k = self.screen.get_wch()
         if k == curses.KEY_F1:
-            self.widget_mgr.show_single_popup('Hilfe',
-                    'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
+            self.show_help()
         elif k == curses.KEY_F12:
             self.show_about()
         # admin menu is disabled in final app
@@ -251,9 +251,16 @@ https://github.com/iliis/crossword
         diff = max(math.ceil(self.time_ends - time.time()), 0)
         return time_format(diff)
 
+<<<<<<< HEAD
     def shutdown(self, packet):
         log.info("Shutting down PC!!")
         subprocess.call(["sudo", "halt"])
+=======
+    def show_help(self):
+        # TODO: write help screen
+        self.widget_mgr.show_single_popup('Hilfe',
+                'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
+>>>>>>> 82a2d87549d2b99279141e8da4059e361abdf88c
 
     def reset(self):
         log.info("Resetting application!")
@@ -263,9 +270,10 @@ https://github.com/iliis/crossword
         self.door_panel.reset()
         self.door_panel.visible = False
         self.shooting_range.visible = False
-        self.puzzle.visible = True
         self.shooting_range.reset()
-        self.set_timeout(75 * 60)
+        self.puzzle.visible = True
+        self.final_screen.visible = False
+        self.set_timeout(self.TIMEOUT)
 
         self.widget_mgr.focus = self.puzzle
 

@@ -6,6 +6,7 @@ import threading
 from helpers import *
 from popup import Popup
 from input_popup import InputPopup
+from waitable_timer import WaitableTimer
 
 log = logging.getLogger('puzzle')
 
@@ -17,7 +18,11 @@ class WidgetManager:
         self.widgets = []
         self.focus = None
 
-        self.periodic_refresh()
+        # although 1 would be ideal, this will drift and thus we will have some
+        # values twice which does not look good.
+        # TODO: only re-render widgets which need periodic refreshing
+        self.periodic_refresh_timer = WaitableTimer(self.app.sel, 0.25, self.render, True)
+        self.periodic_refresh_timer.start()
 
     def add(self, widget):
         self.widgets.append(widget)
@@ -74,14 +79,3 @@ class WidgetManager:
             widget.render()
 
         curses.doupdate()
-
-
-    def periodic_refresh(self):
-        # although 1 would be ideal, this will drift and thus we will have some
-        # values twice which does not look good.
-        # TODO: In which context does this call our function? This might introduce multithreading-issues!
-        t = threading.Timer(0.25, self.periodic_refresh)
-        t.daemon = True # kill when main thread exits
-        t.start()
-
-        self.render()
