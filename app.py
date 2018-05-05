@@ -251,16 +251,14 @@ https://github.com/iliis/crossword
         diff = max(math.ceil(self.time_ends - time.time()), 0)
         return time_format(diff)
 
-<<<<<<< HEAD
     def shutdown(self, packet):
         log.info("Shutting down PC!!")
         subprocess.call(["sudo", "halt"])
-=======
+    
     def show_help(self):
         # TODO: write help screen
         self.widget_mgr.show_single_popup('Hilfe',
                 'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
->>>>>>> 82a2d87549d2b99279141e8da4059e361abdf88c
 
     def reset(self):
         log.info("Resetting application!")
