@@ -30,8 +30,8 @@ class Crossword(WidgetBase):
         self.app = app
 
         self.width  = cfg['width']
-        self.height = cfg['height']
         self.words  = cfg['words']
+        self.height = len(self.words)
         self.words_init = cfg['init_words']
         self.solution_col = cfg['solution_column']
 
