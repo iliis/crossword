@@ -64,7 +64,7 @@ class Application:
 
         self.widget_mgr = WidgetManager(self)
 
-        self.TIMEOUT = 75*60
+        self.TIMEOUT = 10 #75*60
         self.timeout_timer = WaitableTimer(self.sel, self.TIMEOUT, self.on_timeout)
         self.set_timeout(self.TIMEOUT)
 
@@ -143,6 +143,7 @@ class Application:
         self.shooting_range.visible = False
         self.door_panel.visible = False
         self.final_screen.visible = True
+        self.widget_mgr.focus = self.final_screen
         self.screen.clear()
         self.screen.refresh()
         self.widget_mgr.show_popup("Zeit Abgelaufen", "Ihre Zeit ist leider rum. Bitte begeben Sie sich zum Ausgang.\nFreundlichst, Ihre Spielleitung")
