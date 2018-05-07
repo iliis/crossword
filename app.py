@@ -40,6 +40,7 @@ class Application:
         self.screen = screen
 
         self.is_running = False
+        self.with_cheats = '--with-cheats' in sys.argv
 
         #curses.raw() # disable special keys and stuff (such as ctrl-c)
         self.screen.nodelay(True) # disable blocking on getch()
@@ -155,9 +156,11 @@ class Application:
             self.show_help()
         elif k == curses.KEY_F12:
             self.show_about()
-        # admin menu is disabled in final app
         elif k == curses.KEY_F9:
-            self.widget_mgr.show_input("Management Terminal", "Bitte Passwort eingeben:", self.show_admin_screen, True)
+            if self.with_cheats:
+                self.show_admin_screen()
+            else:
+                self.widget_mgr.show_input("Management Terminal", "Bitte Passwort eingeben:", self.show_admin_screen, True)
         else:
             if not self.widget_mgr.handle_input(k):
                 log.info("unhandled key '{}'".format(k))
@@ -175,8 +178,8 @@ Diese Software ist frei verfügbar unter der GPL. Quellcode unter
 https://github.com/iliis/crossword
 """)
 
-    def show_admin_screen(self, pw):
-        if pw == "ehrichweiss":
+    def show_admin_screen(self, pw=None):
+        if pw == "ehrichweiss" or self.with_cheats:
             ser_port = "not connected"
             if self.shooting_range.target is not None:
                 ser_port = self.shooting_range.target.ser.name
