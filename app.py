@@ -251,7 +251,7 @@ https://github.com/iliis/crossword
         self.shooting_range.visible = False
         self.widget_mgr.focus = self.focus_last
         self.time_ends += self.shooting_range.points_to_bonus_time()
-        self.timeout_timer.reset(self.remaining_time()) # stop any running timer (if any) and set new timeout
+        self.timeout_timer.reset(self.remaining_time_in_seconds()) # stop any running timer (if any) and set new timeout
         self.timeout_timer.start()
 
     def handle_exception_in_reddot_target(self, _):
@@ -259,9 +259,11 @@ https://github.com/iliis/crossword
         exc, info = self.shooting_range.target.cached_exception
         raise exc from None
 
+    def remaining_time_in_seconds(self):
+        return max(math.ceil(self.time_ends - time.time()), 0)
+
     def remaining_time(self):
-        diff = max(math.ceil(self.time_ends - time.time()), 0)
-        return time_format(diff)
+        return time_format(self.remaining_time_in_seconds())
 
     def shutdown(self, packet):
         log.info("Shutting down PC!!")

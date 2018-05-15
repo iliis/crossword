@@ -37,6 +37,7 @@ class WaitableTimer(WaitableEvent):
             self.timer.cancel()
 
         if new_delay is not None:
+            assert new_delay > 0
             self.delay = new_delay
 
         self.clear()
