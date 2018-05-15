@@ -246,6 +246,8 @@ https://github.com/iliis/crossword
         self.shooting_range.visible = False
         self.widget_mgr.focus = self.focus_last
         self.time_ends += self.shooting_range.points_to_bonus_time()
+        self.timeout_timer.reset(self.remaining_time()) # stop any running timer (if any) and set new timeout
+        self.timeout_timer.start()
 
     def remaining_time(self):
         diff = max(math.ceil(self.time_ends - time.time()), 0)
