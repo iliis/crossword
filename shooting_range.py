@@ -5,6 +5,7 @@ import logging
 import math
 import threading
 import time
+import random
 from typing import List, Tuple
 
 from widget import WidgetBase
@@ -56,7 +57,7 @@ class ShootingRange(WidgetBase):
 
         self.MAX_POS = 4500 # min/max X/Y coordinate returned by reddot target
         self.CIRCLE_RAD = 1500
-        self.TIMEOUT = 3 * 60
+        self.TIMEOUT = 10 #3 * 60
         self.MAX_BONUS_TIME = 10 * 60
         self.MAX_POINTS_FOR_BONUS = 200
 
@@ -103,7 +104,17 @@ class ShootingRange(WidgetBase):
         self.timeout_timer.reset(self.TIMEOUT)
 
     def handle_input(self, key):
-        pass
+        if not self.app.with_cheats:
+            return
+
+        # insert random shot
+        if key == curses.KEY_F5:
+            pts = random.randint(0,100)/10
+            dist = random.randint(0,1000)
+            px = random.randint(-self.MAX_POS, self.MAX_POS)
+            py = random.randint(-self.MAX_POS, self.MAX_POS)
+            self.handle_shot([0,0,0,0,0,0,pts,dist,px,py])
+
 
     def handle_shot(self, shot):
         if self.state == ShootingRangeState.READY:
@@ -186,7 +197,7 @@ class ShootingRange(WidgetBase):
         self.shooting_range_state = ShootingRangeState.DISABLED
         self.app.widget_mgr.show_single_popup(
                 'Schiessstand beendet',
-                'Sie haben {} Bonuszeit erhalten'.format(self.points_to_bonus_time()),
+                'Sie haben {} Bonuszeit erhalten'.format(time_format(self.points_to_bonus_time())),
                 self.closed_callback,
                 ['OK'])
         # force render as we did not receive a regular input
