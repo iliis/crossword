@@ -250,6 +250,8 @@ https://github.com/iliis/crossword
         self.shooting_range.visible = False
         self.widget_mgr.focus = self.focus_last
         self.time_ends += self.shooting_range.points_to_bonus_time()
+        self.timeout_timer.reset(self.remaining_time()) # stop any running timer (if any) and set new timeout
+        self.timeout_timer.start()
 
     def remaining_time(self):
         diff = max(math.ceil(self.time_ends - time.time()), 0)
@@ -262,7 +264,7 @@ https://github.com/iliis/crossword
     def show_help(self):
         # TODO: write help screen
         self.widget_mgr.show_single_popup('Hilfe',
-                'TODO: Hier sollte wohl etwas Hilfe zum Puzzle (bzw. einfach zur Bedienung) hinkommen.')
+                'Für jeden Verbrecher gibt es ein Rätsel. Löse die Rätsel und trage die Lösungsworte hier im Kreuzworträtsel ein um auszubrechen. Pfeiltasten auf der Tastatur benutzen zum navigieren. Sobald alles korrekt ausgefüllt ist erscheint die Türsteuerung. Bei Fragen oder wenn Ihr einen Tipp braucht einfach mit dem Telefon anrufen: kurbeln und Höhrer ans Ohr halten.')
 
     def reset(self):
         log.info("Resetting application!")
