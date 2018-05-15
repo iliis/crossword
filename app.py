@@ -120,6 +120,7 @@ class Application:
                     "Dies sollte nicht passieren, bitte melden Sie diesen Fehler der Spielleitung.")
         else:
             self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
+            self.sel.register(self.shooting_range.target.has_raised_exception, selectors.EVENT_READ, self.handle_exception_in_reddot_target)
 
         self.final_screen = FinalScreen(self)
         self.final_screen.visible = False
@@ -252,6 +253,11 @@ https://github.com/iliis/crossword
         self.time_ends += self.shooting_range.points_to_bonus_time()
         self.timeout_timer.reset(self.remaining_time()) # stop any running timer (if any) and set new timeout
         self.timeout_timer.start()
+
+    def handle_exception_in_reddot_target(self, _):
+        self.shooting_range.target.has_raised_exception.clear()
+        exc, info = self.shooting_range.target.cached_exception
+        raise exc from None
 
     def remaining_time(self):
         diff = max(math.ceil(self.time_ends - time.time()), 0)

@@ -1,11 +1,14 @@
 #!/bin/env python3
 
+import os
+import sys
 import serial
 import serial.tools.list_ports
 import time
 import logging
 import threading
 import queue
+import traceback
 
 from waitable_event import WaitableEvent
 
@@ -19,10 +22,16 @@ class ReddotTarget(threading.Thread):
         if port == None:
             # try to autodetect port
             log.info("autodetecting serial port...")
-            all_ports = serial.tools.list_ports.comports()
-            for p in all_ports:
-                log.info("trying port {}".format(p))
-                with serial.Serial(port=p.device, baudrate=9600, timeout=0.1) as s:
+
+            # check if there is a simulated one
+            if os.path.islink('./RedDotSimulator'):
+                all_ports = [('RedDot Target Simulator', './RedDotSimulator')]
+            else:
+                all_ports = [(str(p), p.device) for p in serial.tools.list_ports.comports()]
+
+            for name, path in all_ports:
+                log.info("trying port {}".format(name))
+                with serial.Serial(port=path, baudrate=9600, timeout=0.1) as s:
                     s.write([5])
                     try:
                         c = s.read(1)
@@ -32,8 +41,8 @@ class ReddotTarget(threading.Thread):
                         log.info('no answer, trying next device')
                         continue
 
-                    log.info("found port {}".format(p))
-                    port = p.device
+                    log.info("found port {}".format(name))
+                    port = path
                     break
             else:
                 raise ReddotTarget.AutodetectFailedException("Serialport autodetection failed! Is the reddot-target connected?")
@@ -44,6 +53,9 @@ class ReddotTarget(threading.Thread):
 
         self.shots_queue = queue.Queue(maxsize=100)
         self.shots_queue_available = WaitableEvent() # we cannot use select() with a queue :(
+
+        self.cached_exception = None
+        self.has_raised_exception = WaitableEvent()
 
         self.is_running = True
         self.daemon = True # auto-kill when main thread exits
@@ -78,11 +90,16 @@ class ReddotTarget(threading.Thread):
         #time.sleep(0.2)
 
     def run(self):
-        log.info("starting thread for target...")
-        while self.is_running:
-            data = self.poll()
-            if data is not None:
-                self.shots_queue.put(data)
-                self.shots_queue_available.set()
+        try:
+            log.info("starting thread for target...")
+            while self.is_running:
+                data = self.poll()
+                if data is not None:
+                    self.shots_queue.put(data)
+                    self.shots_queue_available.set()
 
-            time.sleep(0.2)
+                time.sleep(0.2)
+        except Exception as e:
+            log.error("exception in ReddotTarget Thread: {}\n{}\n".format(e, traceback.format_exc()))
+            self.cached_exception = (e, sys.exc_info())
+            self.has_raised_exception.set()
