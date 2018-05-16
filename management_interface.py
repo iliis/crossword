@@ -39,6 +39,8 @@ class PacketParser:
                 # got complete length info
                 payload_length, self.buffer = self.buffer.split(b'\n', 1)
                 if self.timer is not None:
+                    # got more data, reset timer (this allows for a full message to take quite long, as long as no single delay is above the timeout, but wayne)
+                    self.timer.reset()
                     self.timer.start()
 
                 # strip any additional newline characters
