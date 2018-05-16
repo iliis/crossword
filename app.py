@@ -65,7 +65,7 @@ class Application:
 
         self.widget_mgr = WidgetManager(self)
 
-        self.TIMEOUT = 60 #75*60
+        self.TIMEOUT = 75*60
         self.timeout_timer = WaitableTimer(self.sel, self.TIMEOUT, self.on_timeout)
         self.set_timeout(self.TIMEOUT)
 
