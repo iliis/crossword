@@ -5,17 +5,31 @@ import selectors
 import json
 import traceback
 
+from waitable_timer import WaitableTimer
 from helpers import *
 
 log = logging.getLogger('puzzle')
 
+NETWORK_DELAY = 1 # in seconds
+
 class PacketParser:
-    def __init__(self):
+    def __init__(self, timer=None):
+        self.timer = timer
+        if timer is not None:
+            self.timer.callback = self.on_timeout
         self.reset()
 
     def reset(self):
         self.length = None
         self.buffer = bytearray()
+        if self.timer is not None:
+            self.timer.reset()
+
+    def on_timeout(self):
+        log.warning("timeout while receiving network data")
+        if len(self.buffer) > 0:
+            log.warning("got {} bytes of {}: '{}'".format(len(self.buffer), self.length, self.buffer))
+        self.reset()
 
     def parse(self, data):
         self.buffer.extend(data)
@@ -24,6 +38,8 @@ class PacketParser:
             while b'\n' in self.buffer:
                 # got complete length info
                 payload_length, self.buffer = self.buffer.split(b'\n', 1)
+                if self.timer is not None:
+                    self.timer.start()
 
                 # strip any additional newline characters
                 payload_length = payload_length.replace(b'\r', b'')
@@ -46,6 +62,8 @@ class PacketParser:
                 # get ready for next packet
                 self.buffer = self.buffer[self.length:] # put rest of data (if any) in buffer for next packet
                 self.length = None
+                if self.timer is not None:
+                    self.timer.reset()
 
                 return packet
 
@@ -95,7 +113,7 @@ class ManagementInterface:
         conn.setblocking(False)
         self.selector.register(conn, selectors.EVENT_READ, self.read)
 
-        self.data_buffer[conn] = PacketParser()
+        self.data_buffer[conn] = PacketParser(WaitableTimer(self.selector, NETWORK_DELAY, None))
         self.connections.append(conn)
 
     def get_local_addresses(self):
