@@ -57,8 +57,8 @@ class ShootingRange(WidgetBase):
 
         self.MAX_POS = 4500 # min/max X/Y coordinate returned by reddot target
         self.CIRCLE_RAD = 1500
-        self.TIMEOUT = 10 #3 * 60
-        self.MAX_BONUS_TIME = 10 * 60
+        self.TIMEOUT = 3 * 60
+        self.MAX_BONUS_TIME = 15 * 60
         self.MAX_POINTS_FOR_BONUS = 200
 
         curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_WHITE) # bg white

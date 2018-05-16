@@ -96,7 +96,7 @@ class Crossword(WidgetBase):
 
 
     def calculate_area_needed(self):
-        return self.height*2+1, self.width*4+1
+        return self.height*2+1, self.width*5+1
 
     def handle_input(self, key):
         if   key == curses.KEY_LEFT:  self.cursor_move(-1, 0)
