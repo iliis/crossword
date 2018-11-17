@@ -249,6 +249,14 @@ https://github.com/iliis/crossword
         self.timeout_timer.reset(self.remaining_time_in_seconds()) # stop any running timer (if any) and set new timeout
         self.timeout_timer.start()
 
+        self.mi.send_packet({
+            'event': 'shooting_range_timeout',
+            'bonus_time': self.shooting_range.points_to_bonus_time(),
+            'total_points': self.shooting_range.total_points(),
+            'remaining_time': self.remaining_time_in_seconds()
+        })
+
+
     def handle_exception_in_reddot_target(self, _):
         self.shooting_range.target.has_raised_exception.clear()
         exc, info = self.shooting_range.target.cached_exception
