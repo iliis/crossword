@@ -57,7 +57,7 @@ class DoorPanel(WidgetBase):
 
         if not state:
             # only confirm if user wants to unlock door
-            self.app.widget_mgr.show_single_popup(
+            self.app.widget_mgr.show_popup(
                     'Tür {} öffnen?'.format(self.cursor+1),
                     'Wollen Sie Tür {} wirklich öffnen?'.format(self.cursor+1),
                     self.toggle_door_cb,
@@ -71,11 +71,11 @@ class DoorPanel(WidgetBase):
 
     def actually_toggle_door(self):
         if self.door_states[self.cursor]:
-            self.app.widget_mgr.show_single_popup(
+            self.app.widget_mgr.show_popup(
                     self.doors[self.cursor].closed_title,
                     self.doors[self.cursor].closed_message)
         else:
-            self.app.widget_mgr.show_single_popup(
+            self.app.widget_mgr.show_popup(
                     self.doors[self.cursor].opened_title,
                     self.doors[self.cursor].opened_message)
 

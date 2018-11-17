@@ -16,7 +16,6 @@ class WidgetManager:
         self.screen = app.screen
 
         self.widgets = []
-        self.focus = None
 
         # although 1 would be ideal, this will drift and thus we will have some
         # values twice which does not look good.
@@ -25,17 +24,40 @@ class WidgetManager:
         self.periodic_refresh_timer.start()
 
     def add(self, widget):
+        log.debug("adding new widget: {}".format(widget))
         self.widgets.append(widget)
 
+    def show(self, widget):
+        log.debug("showing widget: {}".format(widget))
+        if not widget in self.widgets:
+            self.add(widget)
+
+        self.raise_to_fg(widget)
+        widget.visible = True
+
+    def remove(self, widget):
+        if widget in self.widgets:
+            log.debug("removing widget: {}".format(widget))
+            self.widgets.remove(widget)
+        else:
+            log.debug("not removing widget: {}, is already removed".format(widget))
+        widget.visible = False
+
+    def remove_all(self):
+        log.debug("removing all widgets")
+        self.widgets = []
+
+    def raise_to_fg(self, widget):
+        # move widget to end of list
+        log.debug("raising widget to foreground: {}".format(widget))
+        idx = self.widgets.index(widget)
+        self.widgets.append(self.widgets.pop(idx))
+
     def handle_input(self, key):
-        if self.focus is not None:
-            return self.focus.handle_input(key)
+        if len(self.widgets) > 0:
+            return self.widgets[-1].handle_input(key)
         else:
             return False
-
-    def show_single_popup(self, *args, **kwargs):
-        if not isinstance(self.focus, Popup):
-            self.show_popup(*args, **kwargs)
 
     def show_popup(self, title, text, callback=None, buttons=['OK']):
         return self.show_popup_obj(Popup(self.app, self.screen, title, text, buttons), title, text, callback)
@@ -48,17 +70,14 @@ class WidgetManager:
     def show_popup_obj(self, popup, title, text, callback=None):
         self.add(popup)
 
-        old_focus = self.focus # save focus at time of popup call
-        self.focus = popup
-
         def wrapped_callback(btn):
             nonlocal popup # otherwise assignment to this variable will mark it as local
 
-            log.info('popup wrapped_callback, restoring focus to {}'.format(old_focus))
-            self.focus = old_focus # restore focus
             popup.visible = False
             #popup.screen.clear()
             self.widgets.remove(popup)
+
+            log.info('popup wrapped_callback, restoring focus to {}'.format(self.widgets[-1])) # this fails if there is NO widget, but that should never happen
 
             self.screen.clear()
             self.screen.refresh()

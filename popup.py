@@ -88,4 +88,4 @@ class Popup(WidgetBase):
             attr = curses.A_BOLD | curses.color_pair(self.col_selected if i == self.selected_button else self.col_unselected)
             self.screen.addstr(self.height+2,
                     self.width+3 - (button_w+1)*(len(self.buttons) - i),
-                    f"{button:^{button_w}}", attr)
+                    "{text:^{width}}".format(text=button, width=button_w), attr)

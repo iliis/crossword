@@ -57,9 +57,12 @@ class ShootingRange(WidgetBase):
 
         self.MAX_POS = 4500 # min/max X/Y coordinate returned by reddot target
         self.CIRCLE_RAD = 1500
-        self.TIMEOUT = 3 * 60
-        self.MAX_BONUS_TIME = 15 * 60
-        self.MAX_POINTS_FOR_BONUS = 200
+
+        cfg = app.cfg["shooting_range"]
+
+        self.TIMEOUT = cfg["timeout"]
+        self.MAX_BONUS_TIME = cfg["max_bonus_time"]
+        self.MAX_POINTS_FOR_BONUS = cfg["max_points_for_bonus"]
 
         curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_WHITE) # bg white
         curses.init_pair(51, curses.COLOR_WHITE, curses.COLOR_RED)   # bg red
@@ -117,7 +120,9 @@ class ShootingRange(WidgetBase):
 
 
     def handle_shot(self, shot):
+        log.debug("handling shot: shooting range state = {}".format(self.state))
         if self.state == ShootingRangeState.READY:
+            log.debug("received first shot! callback = {}".format(self.first_shot_callback))
             self.timeout_timer.start()
             self.state = ShootingRangeState.ACTIVE
             self.time_started = time.time()
@@ -195,7 +200,7 @@ class ShootingRange(WidgetBase):
     def shooting_range_timeout(self):
         log.info("shooting range timeout")
         self.shooting_range_state = ShootingRangeState.DISABLED
-        self.app.widget_mgr.show_single_popup(
+        self.app.widget_mgr.show_popup(
                 'Schiessstand beendet',
                 'Sie haben {} Bonuszeit erhalten'.format(time_format(self.points_to_bonus_time())),
                 self.closed_callback,

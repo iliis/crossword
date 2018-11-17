@@ -11,6 +11,7 @@ import random
 import sys
 import select
 import signal
+import traceback
 
 MAX_POS = 4500
 
@@ -24,7 +25,7 @@ def send_shot(ser):
     ser.write(msg.encode())
 
 
-with subprocess.Popen(['/usr/bin/socat', '-d', '-d', 'pty,raw,echo=0,link=./RedDotSimulator', 'pty,raw,echo=0,link=./RedDotSimulatorBackend'],
+with subprocess.Popen(['/usr/bin/socat', '-d', '-d', 'pty,rawer,echo=0,link=./RedDotSimulator', 'pty,rawer,echo=0,link=./RedDotSimulatorBackend'],
         stdin=subprocess.DEVNULL,
         ) as socat:
 
@@ -65,3 +66,5 @@ with subprocess.Popen(['/usr/bin/socat', '-d', '-d', 'pty,raw,echo=0,link=./RedD
     except Exception as e:
         print("got exception:")
         print(e)
+        traceback.print_exc()
+        exit(-1)

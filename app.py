@@ -3,11 +3,9 @@ import json
 import logging
 import os
 import selectors
-import serial
 import subprocess
 import sys
 import time
-import threading
 
 from helpers import *
 from crossword import Crossword
@@ -20,7 +18,7 @@ from waitable_timer import WaitableTimer
 from final_screen import FinalScreen
 
 # make sure logfile doesn't grow unboundedly
-if os.path.getsize("puzzle.log") > 1024*1024*10: # limit: 10MB
+if os.path.exists("puzzle.log") and os.path.getsize("puzzle.log") > 1024*1024*10: # limit: 10MB
     print("deleting huge logfile")
     os.remove("puzzle.log")
 
@@ -40,7 +38,16 @@ class Application:
         self.screen = screen
 
         self.is_running = False
-        self.with_cheats = '--with-cheats' in sys.argv
+
+        # optionally pass different configuration file (useful for debugging)
+        if len(sys.argv) > 1:
+            app_cfg_path = sys.argv[1]
+        else:
+            app_cfg_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'app.cfg')
+
+        with open(app_cfg_path, 'r') as app_cfg:
+            self.cfg = json.load(app_cfg)
+            log.info("using application configuration: {}".format(self.cfg))
 
         #curses.raw() # disable special keys and stuff (such as ctrl-c)
         self.screen.nodelay(True) # disable blocking on getch()
@@ -65,7 +72,7 @@ class Application:
 
         self.widget_mgr = WidgetManager(self)
 
-        self.TIMEOUT = 60*60
+        self.TIMEOUT = self.cfg["game_timeout"] #60*60
         self.timeout_timer = WaitableTimer(self.sel, self.TIMEOUT, self.on_timeout)
         self.set_timeout(self.TIMEOUT)
 
@@ -74,12 +81,11 @@ class Application:
 
         puzzle_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'puzzle.cfg')
         with open(puzzle_filename, 'r') as puzzle_cfg:
-            cfg = json.load(puzzle_cfg)
-            log.info("using configuration: {}".format(cfg))
+            pcfg = json.load(puzzle_cfg)
+            log.info("using puzzle configuration: {}".format(pcfg))
             h, w = screen.getmaxyx()
-            self.puzzle = Crossword(self, Vector(10,1), Vector(w-10, h-2), cfg)
-            self.widget_mgr.add(self.puzzle)
-            self.widget_mgr.focus = self.puzzle
+            self.puzzle = Crossword(self, Vector(10,1), Vector(w-10, h-2), pcfg)
+            self.widget_mgr.show(self.puzzle)
 
         self.puzzle.resize_to_contents()
 
@@ -103,16 +109,11 @@ class Application:
 
         self.door_panel = DoorPanel(self)
         self.door_panel.center_in(self.screen)
-        self.widget_mgr.add(self.door_panel)
-        self.door_panel.visible = False
-        #self.widget_mgr.focus = self.door_panel
+        #self.widget_mgr.add(self.door_panel)
 
         self.shooting_range = ShootingRange(self)
-        self.widget_mgr.add(self.shooting_range)
         self.shooting_range.first_shot_callback = self.show_shooting_range
         self.shooting_range.closed_callback = self.on_shooting_range_closed
-        self.shooting_range.visible = False
-        #self.widget_mgr.focus = self.shooting_range
 
         if self.shooting_range.target is None:
             self.widget_mgr.show_popup("Schwerwiegender Fehler", "Konnte keine Verbindung zum Reddot-Target aufbauen. "
@@ -123,8 +124,6 @@ class Application:
             self.sel.register(self.shooting_range.target.has_raised_exception, selectors.EVENT_READ, self.handle_exception_in_reddot_target)
 
         self.final_screen = FinalScreen(self)
-        self.final_screen.visible = False
-        self.widget_mgr.add(self.final_screen)
 
     def __del__(self):
         self.exit()
@@ -141,11 +140,11 @@ class Application:
             'event': 'main_timeout',
         })
 
-        self.puzzle.visible = False
-        self.shooting_range.visible = False
-        self.door_panel.visible = False
-        self.final_screen.visible = True
-        self.widget_mgr.focus = self.final_screen
+        self.widget_mgr.remove(self.puzzle)
+        self.widget_mgr.remove(self.shooting_range)
+        self.widget_mgr.remove(self.door_panel)
+        self.widget_mgr.show(self.final_screen)
+
         self.screen.clear()
         self.screen.refresh()
         self.widget_mgr.show_popup("Zeit Abgelaufen", "Ihre Zeit ist leider rum. Bitte begeben Sie sich zum Ausgang.\nFreundlichst, Ihre Spielleitung")
@@ -158,7 +157,7 @@ class Application:
         elif k == curses.KEY_F12:
             self.show_about()
         elif k == curses.KEY_F9:
-            if self.with_cheats:
+            if self.cfg["cheats"]:
                 self.show_admin_screen()
             else:
                 self.widget_mgr.show_input("Management Terminal", "Bitte Passwort eingeben:", self.show_admin_screen, True)
@@ -172,7 +171,7 @@ class Application:
             self.shooting_range.handle_shot(self.shooting_range.target.shots_queue.get())
 
     def show_about(self):
-        self.widget_mgr.show_single_popup('Kreuzworträtsel',
+        self.widget_mgr.show_popup('Kreuzworträtsel',
                 """Geschrieben von Samuel Bryner
 
 Diese Software ist frei verfügbar unter der GPL. Quellcode unter
@@ -180,12 +179,12 @@ https://github.com/iliis/crossword
 """)
 
     def show_admin_screen(self, pw=None):
-        if pw == "ehrichweiss" or self.with_cheats:
+        if pw == self.cfg["admin_pw"] or self.cfg["cheats"]:
             ser_port = "not connected"
             if self.shooting_range.target is not None:
                 ser_port = self.shooting_range.target.ser.name
 
-            self.widget_mgr.show_single_popup('Admin',
+            self.widget_mgr.show_popup('Admin',
                     'Serial Port: {}\n\n'.format(ser_port)
                     +'Local Address:\n{}\n'.format('\n'.join(' - {}'.format(a) for a in self.mi.get_local_addresses()))
                     +'Local Port: {}\n'.format(self.mi.port)
@@ -193,7 +192,7 @@ https://github.com/iliis/crossword
                     callback=self._admin_screen_cb,
                     buttons=['CLOSE', 'AUTOFILL', 'SHOW SRANGE', 'RESET ALL', 'EXIT APP'])
         else:
-            self.widget_mgr.show_single_popup('Passwort Falsch', 'Die Management Konsole ist nur für die Spielleitung gedacht, sorry.')
+            self.widget_mgr.show_popup('Passwort Falsch', 'Die Management-Konsole ist nur für die Spielleitung gedacht, sorry.')
 
     def _admin_screen_cb(self, button):
         if button == 'EXIT APP':
@@ -228,28 +227,24 @@ https://github.com/iliis/crossword
         else:
             buttons = ['OK']
 
-        self.widget_mgr.show_single_popup(
+        self.widget_mgr.show_popup(
                 packet['title'],
                 packet['text'],
                 buttons=buttons)
 
     def on_crossword_solved(self, _):
-        self.puzzle.visible = False
-        self.door_panel.visible = True
-        self.widget_mgr.focus = self.door_panel
+        self.widget_mgr.remove(self.puzzle)
+        self.widget_mgr.show(self.door_panel)
 
     def show_shooting_range(self):
-        if not self.shooting_range.visible:
+        if self.shooting_range.target is not None:
             if self.shooting_range.state == ShootingRangeState.NOT_WORKING:
                 raise Exception("Cannot start shooting range: Target is not working.")
             else:
-                self.shooting_range.visible = True
-                self.focus_last = self.widget_mgr.focus
-                self.widget_mgr.focus = self.shooting_range
+                self.widget_mgr.show(self.shooting_range)
 
     def on_shooting_range_closed(self, _):
-        self.shooting_range.visible = False
-        self.widget_mgr.focus = self.focus_last
+        self.widget_mgr.remove(self.shooting_range)
         self.time_ends += self.shooting_range.points_to_bonus_time()
         self.timeout_timer.reset(self.remaining_time_in_seconds()) # stop any running timer (if any) and set new timeout
         self.timeout_timer.start()
@@ -270,24 +265,23 @@ https://github.com/iliis/crossword
         subprocess.call(["sudo", "halt"])
     
     def show_help(self):
-        # TODO: write help screen
-        self.widget_mgr.show_single_popup('Hilfe',
-                'Für jeden Verbrecher gibt es ein Rätsel. Löse die Rätsel und trage die Lösungsworte hier im Kreuzworträtsel ein um auszubrechen. Pfeiltasten auf der Tastatur benutzen zum navigieren. Sobald alles korrekt ausgefüllt ist erscheint die Türsteuerung. Bei Fragen oder wenn Ihr einen Tipp braucht einfach mit dem Telefon anrufen: kurbeln und Höhrer ans Ohr halten.')
+        self.widget_mgr.show_popup('Hilfe',
+                'Für jeden Verbrecher gibt es ein Rätsel. Löse die Rätsel und trage die Lösungsworte hier im Kreuzworträtsel ein um auszubrechen. '
+                'Pfeiltasten auf der Tastatur benutzen zum navigieren. Sobald alles korrekt ausgefüllt ist erscheint die Türsteuerung. '
+                'Bei Fragen oder wenn Ihr einen Tipp braucht einfach mit dem Telefon anrufen: Kurbeln und Höhrer ans Ohr halten.')
 
     def reset(self):
         log.info("Resetting application!")
         self.screen.clear()
-        self.puzzle.reset()
 
+        self.puzzle.reset()
         self.door_panel.reset()
-        self.door_panel.visible = False
-        self.shooting_range.visible = False
         self.shooting_range.reset()
-        self.puzzle.visible = True
-        self.final_screen.visible = False
+
+        self.widget_mgr.remove_all()
         self.set_timeout(self.TIMEOUT)
 
-        self.widget_mgr.focus = self.puzzle
+        self.widget_mgr.show(self.puzzle)
 
     def run(self):
         #ser.write(b'crossword running')

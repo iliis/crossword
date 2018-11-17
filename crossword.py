@@ -297,7 +297,7 @@ class Crossword(WidgetBase):
         if all([s == Crossword.SolutionState.CORRECT for s, _ in self.validate_input()]):
             log.info('crossword has been solved')
             self.notify_state_update('solved')
-            self.app.widget_mgr.show_single_popup(
+            self.app.widget_mgr.show_popup(
                     'Gelöst!',
                     'Gratulation, Sie haben das Kreuzworträtsel erfolgreich gelöst!',
                     callback = self.solved_callback)
