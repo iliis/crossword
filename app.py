@@ -223,6 +223,8 @@ https://github.com/iliis/crossword
         if hasattr(self, 'shooting_range') and self.shooting_range.target is not None:
             self.shooting_range.target.is_running = False
 
+        self.backup_state()
+
     def show_popup_from_packet(self, packet):
         if not 'title' in packet or not 'text' in packet:
             raise ValueError("Invalid command: missing 'title' or 'text' field.")
