@@ -294,6 +294,7 @@ class Crossword(WidgetBase):
         return state
 
     def check_for_solution(self):
+        self.app.backup_state()
         if all([s == Crossword.SolutionState.CORRECT for s, _ in self.validate_input()]):
             log.info('crossword has been solved')
             self.notify_state_update('solved')

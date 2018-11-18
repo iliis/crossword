@@ -109,6 +109,7 @@ class Application:
 
         self.door_panel = DoorPanel(self)
         self.door_panel.center_in(self.screen)
+        self.door_panel.visible = False
         #self.widget_mgr.add(self.door_panel)
 
         self.shooting_range = ShootingRange(self)
@@ -124,6 +125,8 @@ class Application:
             self.sel.register(self.shooting_range.target.has_raised_exception, selectors.EVENT_READ, self.handle_exception_in_reddot_target)
 
         self.final_screen = FinalScreen(self)
+
+        self.check_for_backup()
 
     def __del__(self):
         self.exit()
@@ -149,6 +152,8 @@ class Application:
         self.screen.refresh()
         self.widget_mgr.show_popup("Zeit Abgelaufen", "Ihre Zeit ist leider rum. Bitte begeben Sie sich zum Ausgang.\nFreundlichst, Ihre Spielleitung")
         self.widget_mgr.render()
+
+        self.clear_backup()
 
     def handle_input(self, stdin):
         k = self.screen.get_wch()
@@ -235,6 +240,7 @@ https://github.com/iliis/crossword
     def on_crossword_solved(self, _):
         self.widget_mgr.remove(self.puzzle)
         self.widget_mgr.show(self.door_panel)
+        self.backup_state()
 
     def show_shooting_range(self):
         if self.shooting_range.target is not None:
@@ -255,6 +261,7 @@ https://github.com/iliis/crossword
             'total_points': self.shooting_range.total_points(),
             'remaining_time': self.remaining_time_in_seconds()
         })
+        self.backup_state()
 
 
     def handle_exception_in_reddot_target(self, _):
@@ -302,3 +309,53 @@ https://github.com/iliis/crossword
             for key, mask in events:
                 callback = key.data
                 callback(key.fileobj)
+
+    def backup_state(self):
+        state = {
+            # TODO: store this as an absolute timestamp, so time continues?
+            'time_remaining': self.remaining_time_in_seconds(),
+            # TODO: puzzle state backup/restore should be handled in Crossword class itself
+            'puzzle_input': [''.join(line) for line in self.puzzle.puzzle_input],
+            'puzzle_solved': self.door_panel.visible
+        }
+
+        with open('state_backup.cfg', 'w') as state_file:
+            json.dump(state, state_file)
+            log.info("wrote state to backup file: {}".format(state))
+
+    def clear_backup(self):
+        if os.path.exists("state_backup.cfg"):
+            log.info("deleting state backup")
+            os.remove("state_backup.cfg")
+
+    def restore_backup(self):
+        with open('state_backup.cfg', 'r') as state_file:
+            state = json.load(state_file)
+
+        self.set_timeout(state["time_remaining"])
+
+        if state["puzzle_solved"]:
+            self.widget_mgr.remove(self.puzzle)
+            self.widget_mgr.show(self.door_panel)
+        else:
+            # TODO: puzzle state backup/restore should be handled in Crossword class itself
+            self.puzzle.puzzle_input = [[c for c in line] for line in state["puzzle_input"]]
+
+        log.warning("Restored state from backup. Remaining time: {}".format(self.remaining_time_in_seconds()))
+        self.mi.send_packet({
+            'event': 'backup_restored',
+            'remaining_time': self.remaining_time_in_seconds(),
+        })
+
+    def check_for_backup(self):
+        if os.path.exists('state_backup.cfg'):
+            self.widget_mgr.show_popup('Wiederherstellen?',
+                                       'Offenbar wurde das Spiel unterbrochen und nicht korrekt zu Ende gespielt.\n'
+                                       'Dies sollte nicht passieren, bitte melden Sie diesen Vorfall der Spielleitung.\n\n'
+                                       'Möchten Sie Ihren den vorherigen Zustand wieder rekonstruieren? Andernfalls müssen Sie mit dem Kreuzworträtsel von vorne beginnen.',
+                                       callback=self._check_backup_popup_cb,
+                                       buttons=['WIEDERHERSTELLEN', 'NEUES SPIEL'])
+
+    def _check_backup_popup_cb(self, button):
+        if button == 'WIEDERHERSTELLEN':
+            self.restore_backup()
