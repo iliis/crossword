@@ -330,10 +330,12 @@ https://github.com/iliis/crossword
             log.info("deleting state backup")
             os.remove("state_backup.cfg")
 
-    def restore_backup(self):
+    def load_backup(self):
         with open('state_backup.cfg', 'r') as state_file:
-            state = json.load(state_file)
+            return json.load(state_file)
 
+    def restore_backup(self):
+        state = self.load_backup()
         self.set_timeout(state["time_remaining"])
 
         if state["puzzle_solved"]:
@@ -349,8 +351,30 @@ https://github.com/iliis/crossword
             'remaining_time': self.remaining_time_in_seconds(),
         })
 
+    def is_backup_different(self):
+        """
+        Check if there is anything in the backup to be interesting.
+        """
+        if not os.path.exists('state_backup.cfg'):
+            return False # no backup -> nothing interesting
+
+        backup = self.load_backup()
+        if backup["puzzle_solved"]:
+            return True
+
+        # check crossword puzzle
+        for line_backup, line_puzzle in zip(backup["puzzle_input"], self.puzzle.puzzle_input):
+            if [c for c in line_backup] != line_puzzle:
+                return True
+
+        # nothing to restore from backpu
+        return False
+
     def check_for_backup(self):
-        if os.path.exists('state_backup.cfg'):
+
+        # check if backup contains anything interesting
+        if self.is_backup_different():
+            # if so, ask if you want to restore it
             self.widget_mgr.show_popup('Wiederherstellen?',
                                        'Offenbar wurde das Spiel unterbrochen und nicht korrekt zu Ende gespielt.\n'
                                        'Dies sollte nicht passieren, bitte melden Sie diesen Vorfall der Spielleitung.\n\n'
