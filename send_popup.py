@@ -36,7 +36,9 @@ payload = {
     'buttons': args.buttons
 }
 data = json.dumps(payload)
-conn.send("{}\n{}\n".format(len(data), data).encode('utf8'))
+conn.send("{}\n{}\n".format(len(data), data).encode('ascii'))
+
+print("sent packet of length {} (encoded length: {})".format(len(data), len(data.encode('ascii'))))
 
 
 try:
@@ -44,7 +46,7 @@ try:
         data = conn.recv(4096)
 
         if data:
-        #log.info("received {} bytes: '{}'".format(len(data), data))
+            #print("received {} bytes: '{}'".format(len(data), data))
             p = data_buffer.parse(data)
             if p:
                 payload = json.loads(p)

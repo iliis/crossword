@@ -52,14 +52,14 @@ class PacketParser:
 
                 self.length = int(payload_length)
 
-                #log.info("got packet header: length = {}".format(int(payload_length)))
+                log.debug("got packet header: length = {}".format(int(payload_length)))
                 break
 
         # no elseif, might fall trough:
         if self.length is not None:
             if len(self.buffer) >= self.length:
                 # packet is complete
-                packet = self.buffer[:self.length].decode('ascii')
+                packet = self.buffer[:self.length]
 
                 # get ready for next packet
                 self.buffer = self.buffer[self.length:] # put rest of data (if any) in buffer for next packet
@@ -134,7 +134,7 @@ class ManagementInterface:
             data = conn.recv(4096)
 
             if data:
-            #log.info("received {} bytes: '{}'".format(len(data), data))
+                #log.debug("received {} bytes: '{}'".format(len(data), data))
                 p = self.data_buffer[conn].parse(data)
                 if p:
                     self.handle_packet(p, conn)
@@ -152,7 +152,7 @@ class ManagementInterface:
 
     def encode_packet(self, payload):
         data = json.dumps(payload, cls=EnumEncoder)
-        return "{}\n{}\n".format(len(data), data).encode('utf8')
+        return "{}\n{}\n".format(len(data), data).encode('ascii') # json.dumps already encodes utf8, but it still returns a str and we need bytes
 
     def reply_success(self, orig_pkt, data=None):
         return {
