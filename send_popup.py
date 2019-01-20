@@ -7,6 +7,7 @@ import logging
 import selectors
 import json
 import traceback
+import time
 
 from management_interface import PacketParser
 
@@ -19,6 +20,11 @@ parser.add_argument('-p', '--port', type=int, default=1234, help='Destination po
 parser.add_argument('-a', '--address', default='localhost', help='Destination address')
 args = parser.parse_args()
 
+
+def send_packet(connection, payload):
+    data = json.dumps(payload)
+    connection.send("{}\n{}\n".format(len(data), data).encode('ascii'))
+    print("sent packet of length {} (encoded length: {})".format(len(data), len(data.encode('ascii'))))
 
 print("buttons:", args.buttons)
 
@@ -35,25 +41,30 @@ payload = {
     'text':    args.message,
     'buttons': args.buttons
 }
-data = json.dumps(payload)
-conn.send("{}\n{}\n".format(len(data), data).encode('ascii'))
+send_packet(conn, payload)
 
-print("sent packet of length {} (encoded length: {})".format(len(data), len(data.encode('ascii'))))
+
+if False:
+    # check if this is a problem
+    data = json.dumps({'command': 'get_time'})
+
+    # send packet in two parts
+    conn.send("{}\n{}".format(len(data), data[:5]).encode('ascii'))
+    time.sleep(0.3)
+    conn.send("{}\n".format(data[5:]).encode('ascii'))
+
 
 
 try:
-    while True:
+    running = True
+    while running:
         data = conn.recv(4096)
+        for packet in data_buffer.receive(data):
+            payload = json.loads(packet)
+            print("got answer:", payload)
+            if 'command' in payload and payload['command'] == 'popup_closed':
+                running = False # exit
 
-        if data:
-            #print("received {} bytes: '{}'".format(len(data), data))
-            p = data_buffer.parse(data)
-            if p:
-                payload = json.loads(p)
-                print("got answer:")
-                print(payload)
-                if 'command' in payload and payload['command'] == 'popup_closed':
-                    break
 except ValueError:
     print("got invalid packet data: '{}'".format(data))
 except ConnectionResetError:

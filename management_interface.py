@@ -31,8 +31,42 @@ class PacketParser:
             log.warning("got {} bytes of {}: '{}'".format(len(self.buffer), self.length, self.buffer))
         self.reset()
 
-    def parse(self, data):
+    def receive(self, data):
+        """Parses data and returns a list of zero or more packets."""
+
+        if not data:
+            return []
+
         self.buffer.extend(data)
+
+        #log.debug("adding '{}' to buffer".format(data))
+        #log.debug("buffer now contains '{}' = {} bytes".format(self.buffer, len(self.buffer)))
+
+        packets = []
+
+        while True:
+            more, packet = self.parse()
+            if packet:
+                packets.append(packet)
+            if not more:
+                break
+
+        return packets
+
+
+    def parse(self):
+        """
+        Parses internal buffer and returns any packet it can find, which can be none, one or multiple!
+
+        returns: Tuple[bool, Optional[packet]]
+
+        bool: if True, then there is more data to process and parse() should be called again
+        packet: parsed packet, might be None
+
+        """
+
+        #log.debug("start parsing: {} bytes in buffer".format(len(self.buffer)))
+
         if self.length is None:
             # no length information yet
             while b'\n' in self.buffer:
@@ -41,18 +75,23 @@ class PacketParser:
                 if self.timer is not None:
                     # got more data, reset timer (this allows for a full message to take quite long, as long as no single delay is above the timeout, but wayne)
                     self.timer.reset()
-                    self.timer.start()
 
                 # strip any additional newline characters
                 payload_length = payload_length.replace(b'\r', b'')
                 payload_length = payload_length.replace(b'\n', b'')
 
                 if len(payload_length) == 0:
+                    #log.debug("payload len is 0, {} bytes remaining in buffer".format(len(self.buffer)))
                     continue # try again by splitting at next newline
 
                 self.length = int(payload_length)
 
-                log.debug("got packet header: length = {}".format(int(payload_length)))
+                #log.debug("got packet header: length = {}".format(self.length))
+
+                if self.timer is not None:
+                    # only start timer if we have a valid payload_length
+                    self.timer.start()
+
                 break
 
         # no elseif, might fall trough:
@@ -63,11 +102,17 @@ class PacketParser:
 
                 # get ready for next packet
                 self.buffer = self.buffer[self.length:] # put rest of data (if any) in buffer for next packet
+
+                #log.debug("got complete packet (length = {}, remaining in buffer: {} bytes)".format(self.length, len(self.buffer)))
+
                 self.length = None
                 if self.timer is not None:
                     self.timer.reset()
 
-                return packet
+                return len(self.buffer) > 0, packet
+
+        # if we fall through to here, there might still be data in the buffer but not a complete packet
+        return False, None
 
 
 
@@ -132,13 +177,13 @@ class ManagementInterface:
     def read(self, conn):
         try:
             data = conn.recv(4096)
+            packets = self.data_buffer[conn].receive(data)
 
-            if data:
-                #log.debug("received {} bytes: '{}'".format(len(data), data))
-                p = self.data_buffer[conn].parse(data)
-                if p:
-                    self.handle_packet(p, conn)
-                return
+            for packet in packets:
+                self.handle_packet(packet, conn)
+
+            if packets:
+                return # keep connection open
         except ValueError:
             log.error("got invalid packet data: '{}'".format(data))
         except ConnectionResetError:
