@@ -155,6 +155,11 @@ class Application:
 
         self.clear_backup()
 
+    def show_static_crossword(self):
+        log.info("showing crossword again")
+        self.widget_mgr.remove(self.final_screen)
+        self.widget_mgr.show(self.puzzle)
+
     def handle_input(self, stdin):
         k = self.screen.get_wch()
         if k == curses.KEY_F1:
@@ -280,7 +285,7 @@ https://github.com/iliis/crossword
     def shutdown(self, packet):
         log.info("Shutting down PC!!")
         subprocess.call(["sudo", "halt"])
-    
+
     def show_help(self):
         self.widget_mgr.show_popup('Hilfe',
                 'Für jeden Verbrecher gibt es ein Rätsel. Löse die Rätsel und trage die Lösungsworte hier im Kreuzworträtsel ein um auszubrechen. '

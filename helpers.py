@@ -1,3 +1,4 @@
+import curses
 import math
 from enum import Enum
 import json
@@ -43,6 +44,15 @@ def input_to_chr(_input):
     else:
         assert type(_input) == str
         return _input
+
+def is_enter_key(key):
+    if type(key) == int and key == ord('\n'):
+        return True
+
+    if key == curses.KEY_ENTER or key == '\n' or key == '\r':
+        return True
+
+    return False
 
 
 # split text into lines (either at \n or ' ') so that it fits into max_cols
