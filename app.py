@@ -20,7 +20,7 @@ from final_screen import FinalScreen
 
 # make sure logfile doesn't grow unboundedly
 if os.path.exists("puzzle.log") and os.path.getsize("puzzle.log") > 1024*1024*10: # limit: 10MB
-    print("[{}] deleting huge logfile".format(datetime.datetime.now())
+    print("[{}] deleting huge logfile".format(datetime.datetime.now()))
     os.remove("puzzle.log")
 
 
