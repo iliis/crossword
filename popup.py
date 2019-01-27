@@ -56,9 +56,9 @@ class Popup(WidgetBase):
         elif key == curses.KEY_RIGHT or key == '\t':       self.selected_button += 1
         elif key == curses.KEY_ENTER or key == ' ' or key == '\n' or key == '\r':
             self.app.mi.send_packet({
-                'command':  'popup_closed',
-                'button':   str(self.buttons[self.selected_button]),
-                'title':    self.title
+                'event':  'popup_closed',
+                'button': str(self.buttons[self.selected_button]),
+                'title':  self.title
             })
             if self.callback:
                 log.info('Popup: calling callback')

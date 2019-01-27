@@ -62,7 +62,7 @@ try:
         for packet in data_buffer.receive(data):
             payload = json.loads(packet)
             print("got answer:", payload)
-            if 'command' in payload and payload['command'] == 'popup_closed':
+            if 'event' in payload and payload['event'] == 'popup_closed':
                 running = False # exit
 
 except ValueError:
