@@ -69,7 +69,7 @@ class Application:
         self.mi.register_handler('set_time', lambda p: self.set_timeout(p['timeout']))
         self.mi.register_handler('show_shooting_range', lambda _: self.show_shooting_range())
         self.mi.register_handler('get_time', lambda p: self.mi.reply_success(p, self.remaining_time()))
-        self.mi.register_handler('restore_saved_state', self.restore_backup);
+        self.mi.register_handler('restore_saved_state', self.restore_backup_by_packet);
 
         self.widget_mgr = WidgetManager(self)
 
@@ -131,6 +131,8 @@ class Application:
         self.exit()
 
     def set_timeout(self, seconds):
+        if seconds <= 0:
+            seconds = 1 # netagive or zero timeouts are not allowed
         self.TIMEOUT = seconds
         self.time_ends = time.time() + self.TIMEOUT
         self.timeout_timer.reset(self.TIMEOUT) # stop any running timer (if any) and set new timeout
@@ -347,9 +349,9 @@ https://github.com/iliis/crossword
 
     def restore_backup_by_packet(self, packet):
         if self.restore_backup():
-            self.mi.reply_success(packet)
+            return self.mi.reply_success(packet)
         else:
-            self.mi.reply_failure(packet, "Could not restore state. Maybe there is no backup?")
+            return self.mi.reply_failure(packet, "Could not restore state. Maybe there is no backup?")
 
     def restore_backup(self):
         state = self.load_backup()
@@ -388,7 +390,7 @@ https://github.com/iliis/crossword
             if [c for c in line_backup] != line_puzzle:
                 return True
 
-        # nothing to restore from backpu
+        # nothing to restore from backup
         return False
 
     def check_for_backup(self):
