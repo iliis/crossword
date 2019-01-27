@@ -33,6 +33,7 @@ log.setLevel(logging.DEBUG)
 
 
 
+
 class Application:
     def __init__(self, screen):
         self.sel = selectors.DefaultSelector()
@@ -198,9 +199,10 @@ https://github.com/iliis/crossword
                 ser_port = self.shooting_range.target.ser.name
 
             self.widget_mgr.show_popup('Admin',
-                    'Serial Port: {}\n\n'.format(ser_port)
+                    'Version {}\nLast Update: {}\n\n'.format(self.get_version(), self.get_version_date())
+                    +'Serial Port: {}\n\n'.format(ser_port)
                     +'Local Address:\n{}\n'.format('\n'.join(' - {}'.format(a) for a in self.mi.get_local_addresses()))
-                    +'Local Port: {}\n'.format(self.mi.port)
+                    +'Local Port: {}\n\n'.format(self.mi.port)
                     +'Remote Control Connections:\n{}\n'.format('\n'.join(' - {}'.format(c.getpeername()) for c in self.mi.connections)),
                     callback=self._admin_screen_cb,
                     buttons=['CLOSE', 'AUTOFILL', 'SHOW SRANGE', 'RESET ALL', 'EXIT APP'])
@@ -410,3 +412,19 @@ https://github.com/iliis/crossword
     def _check_backup_popup_cb(self, button):
         if button == 'WIEDERHERSTELLEN':
             self.restore_backup()
+
+    def get_version(self):
+        try:
+            label = subprocess.check_output(["git", "describe", "--always", "--tags"]).decode('utf8').strip()
+            if len(label) == 0:
+                return "UNKNOWN"
+            else:
+                return label
+        except:
+            return "UNKNOWN (err)"
+
+    def get_version_date(self):
+        try:
+            return subprocess.check_output(["git", "log", "-1", "--format=%cd"]).decode('utf8').strip()
+        except:
+            return "UNKNOWN (err)"
