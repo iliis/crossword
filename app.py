@@ -7,6 +7,7 @@ import selectors
 import subprocess
 import sys
 import time
+import traceback
 
 from helpers import *
 from crossword import Crossword
@@ -30,6 +31,29 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 hdlr.setFormatter(formatter)
 log.addHandler(hdlr)
 log.setLevel(logging.DEBUG)
+
+
+
+def git_cmd(params):
+    try:
+        label = subprocess.check_output(
+                    params,
+                    cwd=os.path.dirname(os.path.realpath(__file__))).decode('utf8').strip()
+
+        if len(label) == 0:
+            return "UNKNOWN"
+        else:
+            return label
+    except Exception as e:
+        log.error("Unhandled Exception: {}".format(e))
+        log.error(traceback.format_exc())
+        return "UNKNOWN (err)"
+
+def get_version():
+    return git_cmd(["git", "describe", "--always", "--tags"])
+
+def get_version_date():
+    return git_cmd(["git", "log", "-1", "--format=%cd"])
 
 
 
@@ -199,7 +223,7 @@ https://github.com/iliis/crossword
                 ser_port = self.shooting_range.target.ser.name
 
             self.widget_mgr.show_popup('Admin',
-                    'Version {}\nLast Update: {}\n\n'.format(self.get_version(), self.get_version_date())
+                    'Version {}\nLast Update: {}\n\n'.format(get_version(), get_version_date())
                     +'Serial Port: {}\n\n'.format(ser_port)
                     +'Local Address:\n{}\n'.format('\n'.join(' - {}'.format(a) for a in self.mi.get_local_addresses()))
                     +'Local Port: {}\n\n'.format(self.mi.port)
@@ -412,19 +436,3 @@ https://github.com/iliis/crossword
     def _check_backup_popup_cb(self, button):
         if button == 'WIEDERHERSTELLEN':
             self.restore_backup()
-
-    def get_version(self):
-        try:
-            label = subprocess.check_output(["git", "describe", "--always", "--tags"]).decode('utf8').strip()
-            if len(label) == 0:
-                return "UNKNOWN"
-            else:
-                return label
-        except:
-            return "UNKNOWN (err)"
-
-    def get_version_date(self):
-        try:
-            return subprocess.check_output(["git", "log", "-1", "--format=%cd"]).decode('utf8').strip()
-        except:
-            return "UNKNOWN (err)"
