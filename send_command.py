@@ -1,9 +1,12 @@
 #!/bin/env python3
 import json
 import socket
+import sys
 
-
-HOST = 'localhost'
+if len(sys.argv) > 1:
+    HOST = sys.argv[1]
+else:
+    HOST = 'localhost'
 
 
 # set up connection
