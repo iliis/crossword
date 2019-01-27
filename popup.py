@@ -17,6 +17,7 @@ class Popup(WidgetBase):
         h, w = parent.getmaxyx()
         parent_size = Vector(w, h)
 
+        self.text = text
         self.layout_text = layout_text(text, 100) # max width: 100
         self.height = len(self.layout_text) + 2 # title, buttons
 

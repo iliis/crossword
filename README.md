@@ -149,3 +149,15 @@ The cursor position is absolute and does NOT take horizontal offset of word into
 `solutionstate` says how close to a solution every word is (can be either
 `UNSOLVED`, `PARTIALLY_CORRECT`, `CORRECT` or `WRONG`) and also for every
 character if it is correct or not.
+
+
+Whenever a window opens or closes a `window_stack_update` event is sent:
+
+    {
+        "event": "window_stack_update",
+        "top_window": {
+            "type": "popup",
+            "title": "blabla",
+            "text": "Lorem Ipsum Dolore Solet"
+        }
+    }

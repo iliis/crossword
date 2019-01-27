@@ -24,6 +24,8 @@ def send(pkt):
 
     print("sent command")
 
+
+def receive():
     data = con.recv(4096)
 
     print("got reply:")
@@ -32,7 +34,7 @@ def send(pkt):
     payload = payload.strip()
     if len(payload) != l:
         print("WARNING: malformed packet: invalid length! Got", len(payload), "bytes instead of", l)
-    
+
     print(json.loads(payload))
 
 
@@ -48,6 +50,8 @@ def send_popup():
         pkt['buttons'] = buttons.split(',')
 
     send(pkt)
+
+    receive()
 
 
 
@@ -65,8 +69,14 @@ def reset():
 def restore_backup():
     send({'command': 'restore_saved_state'})
 
+def just_listen():
+    print("waiting for packets...")
+    while True:
+        receive()
+
 
 fns = [
+        just_listen,
         send_popup,
         quit,
         reset,
