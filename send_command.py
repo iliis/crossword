@@ -59,12 +59,16 @@ def ping():
 def reset():
     send({'command': 'reset'})
 
+def restore_backup():
+    send({'command': 'restore_saved_state'})
+
 
 fns = [
         send_popup,
         quit,
         reset,
         ping,
+        restore_backup,
     ]
 
 

@@ -86,6 +86,7 @@ Commands
 
 - *quit*: Exit application
 - *reset*: Reset application
+- *shutdown*: Shuts down PC. Needs sudo without password for `halt` command.
 - *show_popup*: Show a popup message to user. The parameter 'buttons' is optional and defaults to 'OK'
 
 ```
@@ -97,6 +98,18 @@ Commands
     }
 ```
 
+- *get_time*: Returns the current time left for the game in seconds.
+- *set_time*: Updates the game timer.
+
+```
+    {
+        'command': 'set_time',
+        'timeout': 120,
+    }
+```
+
+- *show_shooting_range*: Shows shooting range window ;)
+- *restore_saved_state*: Load backup from disk (if any). Useful if application crashed.
 
 
 Events
