@@ -69,6 +69,7 @@ class Application:
         self.mi.register_handler('set_time', lambda p: self.set_timeout(p['timeout']))
         self.mi.register_handler('show_shooting_range', lambda _: self.show_shooting_range())
         self.mi.register_handler('get_time', lambda p: self.mi.reply_success(p, self.remaining_time()))
+        self.mi.register_handler('restore_saved_state', self.restore_backup);
 
         self.widget_mgr = WidgetManager(self)
 
@@ -125,8 +126,6 @@ class Application:
             self.sel.register(self.shooting_range.target.has_raised_exception, selectors.EVENT_READ, self.handle_exception_in_reddot_target)
 
         self.final_screen = FinalScreen(self)
-
-        self.check_for_backup()
 
     def __del__(self):
         self.exit()
@@ -336,11 +335,27 @@ https://github.com/iliis/crossword
             os.remove("state_backup.cfg")
 
     def load_backup(self):
-        with open('state_backup.cfg', 'r') as state_file:
-            return json.load(state_file)
+        if not os.path.isfile('state_backup.cfg'):
+            log.error("cannot restore state from backup: file does not exist")
+            return None
+
+        try:
+            with open('state_backup.cfg', 'r') as state_file:
+                return json.load(state_file)
+        except:
+            return None
+
+    def restore_backup_by_packet(self, packet):
+        if self.restore_backup():
+            self.mi.reply_success(packet)
+        else:
+            self.mi.reply_failure(packet, "Could not restore state. Maybe there is no backup?")
 
     def restore_backup(self):
         state = self.load_backup()
+        if state is None:
+            return False
+
         self.set_timeout(state["time_remaining"])
 
         if state["puzzle_solved"]:
@@ -355,6 +370,7 @@ https://github.com/iliis/crossword
             'event': 'backup_restored',
             'remaining_time': self.remaining_time_in_seconds(),
         })
+        return True
 
     def is_backup_different(self):
         """
