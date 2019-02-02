@@ -97,6 +97,8 @@ class Application:
         self.mi.register_handler('get_time', lambda p: self.mi.reply_success(p, self.remaining_time()))
         self.mi.register_handler('restore_saved_state', self.restore_backup_by_packet);
 
+        self.mi.new_connection_handler = self.new_connection_handler
+
         self.widget_mgr = WidgetManager(self)
 
         self.TIMEOUT = self.cfg["game_timeout"] #60*60
@@ -436,3 +438,11 @@ https://github.com/iliis/crossword
     def _check_backup_popup_cb(self, button):
         if button == 'WIEDERHERSTELLEN':
             self.restore_backup()
+
+    def new_connection_handler(self, connection):
+        # notify newly connected clients about the current state of things
+        # (these will notify *all* clients, but that shouldn't be a problem)
+        self.widget_mgr.send_stack_update(force=True)
+        self.puzzle.notify_state_update("new_connection")
+
+

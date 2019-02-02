@@ -60,13 +60,13 @@ class WidgetManager:
         self.send_stack_update()
 
 
-    def send_stack_update(self):
+    def send_stack_update(self, force=False):
         if not self.widgets:
             top = None
         else:
             top = self.widgets[-1]
 
-        if self.last_update == top:
+        if not force and self.last_update == top:
             return # don't send an update when nothing has changed
         self.last_update = top
 

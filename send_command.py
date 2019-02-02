@@ -2,6 +2,7 @@
 import json
 import socket
 import sys
+from management_interface import PacketParser
 
 if len(sys.argv) > 1:
     HOST = sys.argv[1]
@@ -15,6 +16,8 @@ con.connect( (HOST, 1234) )
 
 print("connected to", con.getpeername())
 
+parser = PacketParser()
+
 
 def send(pkt):
     data = json.dumps(pkt)
@@ -27,15 +30,9 @@ def send(pkt):
 
 def receive():
     data = con.recv(4096)
-
-    print("got reply:")
-    l, payload = data.decode('utf8').split('\n', 1)
-    l = int(l)
-    payload = payload.strip()
-    if len(payload) != l:
-        print("WARNING: malformed packet: invalid length! Got", len(payload), "bytes instead of", l)
-
-    print(json.loads(payload))
+    for packet in parser.receive(data):
+        print("got reply:")
+        print(json.loads(packet))
 
 
 def send_popup():

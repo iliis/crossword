@@ -139,6 +139,8 @@ class ManagementInterface:
 
         self.handlers = {}
 
+        self.new_connection_handler = None
+
     # handler should take one parameter: the packet
     # handler can return a full response-packet (use reply_success/_failure()
     # helpers) or raise an exception upon error
@@ -162,6 +164,9 @@ class ManagementInterface:
 
         self.data_buffer[conn] = PacketParser(WaitableTimer(self.selector, NETWORK_DELAY, None))
         self.connections.append(conn)
+
+        if self.new_connection_handler:
+            self.new_connection_handler(conn)
 
     def get_local_addresses(self):
         addrs = []
