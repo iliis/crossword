@@ -31,19 +31,19 @@ class ReddotTarget(threading.Thread):
 
             for name, path in all_ports:
                 log.info("trying port {}".format(name))
-                with serial.Serial(port=path, baudrate=9600, timeout=0.1) as s:
-                    s.write([5])
-                    try:
+                try:
+                    with serial.Serial(port=path, baudrate=9600, timeout=0.1, write_timeout=0.1) as s:
+                        s.write([5])
                         c = s.read(1)
                         if len(c) == 0:
                             raise serial.serialutil.SerialException("no data")
-                    except serial.serialutil.SerialException:
-                        log.info('no answer, trying next device')
-                        continue
+                except serial.serialutil.SerialException:
+                    log.info('no answer, trying next device')
+                    continue
 
-                    log.info("found port {}".format(name))
-                    port = path
-                    break
+                log.info("found port {}".format(name))
+                port = path
+                break
             else:
                 raise ReddotTarget.AutodetectFailedException("Serialport autodetection failed! Is the reddot-target connected?")
 
