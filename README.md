@@ -12,7 +12,7 @@ Installation
 
 Fedora:
 
-    sudo dnf install python3-pyserial python3-etifaces
+    sudo dnf install python3-pyserial python3-netifaces
 
 To launch it:
 
