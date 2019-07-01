@@ -32,7 +32,8 @@ class PacketParser:
         self.reset()
 
     def receive(self, data):
-        """Parses data and returns a list of zero or more packets."""
+        """Parses data and returns a list of zero or more packets.
+        Packets are bytearrays!"""
 
         if not data:
             return []
@@ -221,7 +222,12 @@ class ManagementInterface:
                 }
 
     def handle_packet(self, packet, conn):
-        log.info("got packet: '{}'".format(repr(packet)))
+
+        # the json library can only handle strings up to version 3.5
+        if type(packet) == bytearray:
+            packet = packet.decode('utf-8')
+        
+        log.info("got packet: {}".format(repr(packet)))
 
         payload = json.loads(packet)
 
