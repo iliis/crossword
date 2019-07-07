@@ -20,8 +20,5 @@ numlockx off
 # hide mouse cursor
 unclutter -idle 2.00 -root &
 
-# otherwise it somehow doesn't correctly start
-sleep 1
-
 # actually launch crossword
 xfce4-terminal --fullscreen --hide-menubar --hide-scrollbar --hide-toolbar --command "bash autorun_mainloop.sh"
