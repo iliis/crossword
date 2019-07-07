@@ -18,6 +18,13 @@ To launch it:
 
     python3 main.py
 
+If you can't get a connection to the crossword application, but the network is otherwise fine, open the correct port:
+
+    sudo firewall-cmd --permanent --add-port=1234/tcp
+
+The autorun.sh script disables ALT and CTRL keys. However, other shortcuts
+(e.g. F1 or F10 for xfce4-terminal) still work. For xfce4-terminal, edit
+~/.config/xfce4/terminal/accels.scm
 
 
 Remote Interface
