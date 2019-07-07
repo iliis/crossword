@@ -9,6 +9,9 @@ cd $DIR
 # disable CTRL key
 xmodmap -e 'keycode 135 = NoSymbol'
 
+# make sure numlock is OFF (otherwise the right-hand side of the EEE's keyboard becomes numbers)
+numlockx off
+
 # hide mouse cursor
 unclutter -idle 2.00 -root &
 

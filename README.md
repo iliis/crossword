@@ -12,7 +12,7 @@ Installation
 
 Fedora:
 
-    sudo dnf install python3-pyserial python3-netifaces
+    sudo dnf install python3-pyserial python3-netifaces unclutter numlockx
 
 To launch it:
 
