@@ -14,4 +14,4 @@ unclutter -idle 2.00 -root &
 
 
 # actually launch crossword
-xfce4-terminal --fullscreen --hide-menubar --hide-scrollbar --hide-toolbar --execute autorun_mainloop.sh
+xfce4-terminal --fullscreen --hide-menubar --hide-scrollbar --hide-toolbar --command "bash autorun_mainloop.sh"
