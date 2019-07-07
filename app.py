@@ -400,9 +400,11 @@ https://github.com/iliis/crossword
         if state["puzzle_solved"]:
             self.widget_mgr.remove(self.puzzle)
             self.widget_mgr.show(self.door_panel)
+            self.widget_mgr.render(clear=True)
         else:
             # TODO: puzzle state backup/restore should be handled in Crossword class itself
             self.puzzle.puzzle_input = [[c for c in line] for line in state["puzzle_input"]]
+            self.puzzle.notify_state_update('restore')
 
         log.warning("Restored state from backup. Remaining time: {}".format(self.remaining_time_in_seconds()))
         self.mi.send_packet({

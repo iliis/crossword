@@ -123,7 +123,11 @@ class WidgetManager:
         popup.callback = wrapped_callback
         return popup
 
-    def render(self):
+    def render(self, clear=False):
+        if clear:
+            self.screen.clear()
+            self.screen.refresh()
+
         for widget in self.widgets:
             widget.render()
 
