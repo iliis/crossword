@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # otherwise it somehow doesn't correctly start
-sleep 1
+sleep 5
 
 while [[ True ]]; do
     python3 main.py
