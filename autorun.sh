@@ -1,14 +1,17 @@
 #!/bin/bash
 
+#xrandr --output DVI-I-1 --mode 1024x768
+
 # go to folder where script is (i.e. root of source)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $DIR
 
-while [[ True ]]; do
-    python3 main.py
-    if [[ $? -eq 0 ]]; then
-        echo "application exited cleanly, restarting immediately"
-    else
-        read -n 1 -r -s -p "Press any key to restart application" key
-    fi
-done
+# disable CTRL key
+xmodmap -e 'keycode 135 = NoSymbol'
+
+# hide mouse cursor
+unclutter -idle 2.00 -root &
+
+
+# actually launch crossword
+xfce4-terminal --fullscreen --hide-menu --hide-scrollbar --hide-toolbar --execute autorun_mainloop.sh

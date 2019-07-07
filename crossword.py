@@ -128,7 +128,7 @@ class Crossword(WidgetBase):
             _id, x, y, z, bstate = curses.getmouse()
             self.handle_mouse_input(x,y,bstate)
         else:
-            log.info("ignored key '{}'".format(key))
+            #log.info("ignored key '{}'".format(key)) # already logged in app
             return False # did not handle key, no need to update screen
         return True
 
