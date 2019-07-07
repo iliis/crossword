@@ -7,7 +7,12 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $DIR
 
 # disable CTRL key
+xmodmap -e 'keycode 37 = NoSymbol'
 xmodmap -e 'keycode 135 = NoSymbol'
+
+# ALT
+xmodmap -e 'keycode 64 = NoSymbol'
+xmodmap -e 'keycode 108 = NoSymbol'
 
 # make sure numlock is OFF (otherwise the right-hand side of the EEE's keyboard becomes numbers)
 numlockx off
