@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# go to folder where script is (i.e. root of source)
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd $DIR
+
 while [[ True ]]; do
     #statements
     python3 main.py
