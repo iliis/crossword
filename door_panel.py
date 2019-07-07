@@ -113,5 +113,5 @@ class DoorPanel(WidgetBase):
                     curses.A_BOLD | curses.color_pair(43)
                         if i == self.cursor else curses.color_pair(42))
 
-        self.screen.addstr(ph - 3, 8, 'Verbleibende Zeit: {}'.format(self.app.remaining_time()),
+        self.screen.addstr(ph - 3, 8, 'Verbleibende Zeit: {}       '.format(self.app.remaining_time()),
                 curses.A_NORMAL)
