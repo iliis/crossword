@@ -1,15 +1,11 @@
 #!/bin/env python3
 import threading
 import curses
-import signal
 import traceback
 import os
 import sys
 
 from app import Application, log
-
-# ignore CTRL+V keybinding
-#signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 def main(screen):
     try:

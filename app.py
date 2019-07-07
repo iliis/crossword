@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import traceback
+import signal
 
 from helpers import *
 from crossword import Crossword
@@ -74,6 +75,12 @@ class Application:
         with open(app_cfg_path, 'r') as app_cfg:
             self.cfg = json.load(app_cfg)
             log.info("using application configuration: {}".format(self.cfg))
+
+            if not self.cfg['cheats']:
+                # ignore CTRL+Z/V keybinding
+                log.info("disabling SIGINT")
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+
 
         #curses.raw() # disable special keys and stuff (such as ctrl-c)
         self.screen.nodelay(True) # disable blocking on getch()
