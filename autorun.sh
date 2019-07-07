@@ -5,15 +5,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $DIR
 
 while [[ True ]]; do
-    #statements
     python3 main.py
     if [[ $? -eq 0 ]]; then
-        echo "application exited cleanly, not restarting"
-        break
+        echo "application exited cleanly, restarting immediately"
     else
-        read -n 1 -r -s -p "Press any key to restart application, or [Q] to exit." key
-        if [ "$key" == "q" ] || [ "$key" == "Q" ]; then
-            break
-        fi
+        read -n 1 -r -s -p "Press any key to restart application" key
     fi
 done
