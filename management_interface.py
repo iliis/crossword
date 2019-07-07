@@ -199,7 +199,8 @@ class ManagementInterface:
         log.info("closing connection {}\n".format(conn))
         self.selector.unregister(conn)
         conn.close()
-        self.connections.remove(conn)
+        if conn in self.connections:
+            self.connections.remove(conn)
 
     def encode_packet(self, payload):
         data = json.dumps(payload, cls=EnumEncoder)

@@ -2,17 +2,22 @@
 import json
 import socket
 import sys
+import argparse
+
 from management_interface import PacketParser
 
-if len(sys.argv) > 1:
-    HOST = sys.argv[1]
-else:
-    HOST = 'localhost'
+parser = argparse.ArgumentParser(description='Send a generic command to the crossword server app')
+#parser.add_argument('-c', '--command', type=str, help='command', required=True)
+parser.add_argument('-p', '--port', type=int, default=1234, help='Destination port')
+parser.add_argument('-a', '--address', default='localhost', help='Destination address')
+args = parser.parse_args()
+
+
 
 
 # set up connection
 con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-con.connect( (HOST, 1234) )
+con.connect( (args.address, args.port) )
 
 print("connected to", con.getpeername())
 
