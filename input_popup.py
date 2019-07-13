@@ -15,10 +15,10 @@ class InputPopup(WidgetBase):
         h, w = parent.getmaxyx()
         parent_size = Vector(w, h)
 
-        self.layout_text = layout_text(text, 100) # max width: 100
+        self.layout_text = layout_text(text, 80) # max width: 100
         self.height = len(self.layout_text) + 1 # title, text
 
-        self.width = 104
+        self.width = 90
 
         size = Vector(self.width+4, self.height+4)
 

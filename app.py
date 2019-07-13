@@ -207,7 +207,7 @@ class Application:
             if self.cfg["cheats"]:
                 self.show_admin_screen()
             else:
-                self.widget_mgr.show_input("Management Terminal", "Bitte Passwort eingeben:", self.show_admin_screen, True)
+                self.widget_mgr.show_input("Management", "Passwort:", self.show_admin_screen, True)
         else:
             if not self.widget_mgr.handle_input(k):
                 log.info("unhandled key '{}'".format(k))
@@ -219,9 +219,10 @@ class Application:
 
     def show_about(self):
         self.widget_mgr.show_popup('Kreuzworträtsel',
-                """Geschrieben von Samuel Bryner
+                """Geschrieben von Samuel Bryner:
 
-Diese Software ist frei verfügbar unter der GPL. Quellcode unter
+Diese Software ist frei verfügbar 
+unter der GPL. Quellcode unter
 https://github.com/iliis/crossword
 """)
 
