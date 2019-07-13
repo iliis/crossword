@@ -339,6 +339,7 @@ https://github.com/iliis/crossword
         self.shooting_range.reset()
 
         self.widget_mgr.remove_all()
+        self.TIMEOUT=self.cfg["game_timeout"]
         self.set_timeout(self.TIMEOUT)
 
         self.widget_mgr.show(self.puzzle)
