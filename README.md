@@ -12,7 +12,9 @@ Installation
 
 Fedora:
 
-    sudo dnf install python3-pyserial python3-netifaces unclutter numlockx
+    sudo dnf install python3-pyserial python3-netifaces unclutter numlockx xfce4-terminal openbox
+
+Recommendation: use lightdm as display manager
 
 To launch it:
 
@@ -32,6 +34,16 @@ To disable F1 key UNcomment fullscreen line and add EMPTY accelerator handler:
 
 To disable F10 keys use the mouse in the graphical xfce4 settings and disable F10 etc. 
 
+
+Autostart
+================
+
+Install openbox. Graphically select log in with the "Openbox" session type. This should autostart openbox from now on. 
+
+Add this line to ~/.config/openbox/autostart:
+
+    ~/crossword/autorun.sh
+    
 
 Remote Interface
 ================
