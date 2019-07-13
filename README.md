@@ -27,8 +27,9 @@ The autorun.sh script disables ALT and CTRL keys. However, other shortcuts
 ~/.config/xfce4/terminal/accels.scm
 
 To disable F1 key UNcomment fullscreen line and add EMPTY accelerator handler:
-    (gtk_accel_path "<Actions>/terminal-window/fullscreen" "")
     
+    (gtk_accel_path "<Actions>/terminal-window/fullscreen" "")
+
 To disable F10 keys use the mouse in the graphical xfce4 settings and disable F10 etc. 
 
 
