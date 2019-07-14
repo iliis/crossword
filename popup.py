@@ -7,12 +7,14 @@ from helpers import *
 
 log = logging.getLogger('puzzle')
 
-button_w = 20
+DEFAULT_BUTTON_WIDTH = 20
 
 class Popup(WidgetBase):
 
     def __init__(self, app, parent, title, text, buttons=['OK']):
         assert len(buttons) > 0
+
+        self.button_w = DEFAULT_BUTTON_WIDTH
 
         desired_width = min(100, app.get_screen_width()) # max 100 cols wide, but not bigger than screen can handle
 
@@ -21,7 +23,19 @@ class Popup(WidgetBase):
         self.height = len(self.layout_text) + 2 # title, buttons
 
         # set size according to contents of popup
-        self.width = max(max(len(l) for l in self.layout_text), len(buttons)*(button_w+1))
+        self.width = max(max(len(l) for l in self.layout_text), len(buttons)*(self.button_w+1))
+
+        if self.width+4 > app.get_screen_width():
+            log.warning("Popup is too wide, trying to reduce button size so it fits.")
+
+            # don't make buttons arbitrarily small
+            self.button_w = max(8, int((app.get_screen_width()-4)/len(buttons))-1)
+            self.width = max(max(len(l) for l in self.layout_text), len(buttons)*(self.button_w+1))
+
+            log.debug("New button width: {}. Total popup width: {}.".format(self.button_w, self.width+4))
+
+            if self.width+4 > app.get_screen_width():
+                raise Exception("Failed to reduce popup size to acceptable width. Too many/big buttons?")
 
         size = Vector(self.width+4, self.height+4)
 
@@ -87,5 +101,5 @@ class Popup(WidgetBase):
         for i, button in enumerate(self.buttons):
             attr = curses.A_BOLD | curses.color_pair(self.col_selected if i == self.selected_button else self.col_unselected)
             self.screen.addstr(self.height+2,
-                    self.width+3 - (button_w+1)*(len(self.buttons) - i),
-                    "{text:^{width}}".format(text=button, width=button_w), attr)
+                    self.width+3 - (self.button_w+1)*(len(self.buttons) - i),
+                    "{text:^{width}}".format(text=button, width=self.button_w), attr)
