@@ -90,6 +90,14 @@ class Application:
 
         self.screen.clear()
 
+        # make sure display is big enough
+        H, W = self.screen.getmaxyx()
+        log.info("Screen Size: {} cols by {} rows".format(W,H))
+
+        if W < 102 or H < 39:
+            raise Exception("Screen is too small: {} rows by {} columns, but we need at least 39 by 102.\n".format(H, W) +
+                "Try a smaller font size or increasing the resolution of your terminal emulator.")
+
         # create server for remote control
         self.mi = ManagementInterface(1234, self.sel)
         log.info("local address: {}".format(self.mi.get_local_addresses()))
@@ -124,6 +132,8 @@ class Application:
             self.widget_mgr.show(self.puzzle)
 
         self.puzzle.resize_to_contents()
+        H, W = self.puzzle.screen.getmaxyx()
+        log.info("Puzzle Size: {} x {}".format(W,H))
 
         # center in middle of screen (also take progress bar into account)
         ps = self.puzzle.size()
@@ -221,8 +231,7 @@ class Application:
         self.widget_mgr.show_popup('Kreuzworträtsel',
                 """Geschrieben von Samuel Bryner:
 
-Diese Software ist frei verfügbar 
-unter der GPL. Quellcode unter
+Diese Software ist frei verfügbar unter der GPL. Quellcode unter
 https://github.com/iliis/crossword
 """)
 
@@ -455,5 +464,9 @@ https://github.com/iliis/crossword
         # (these will notify *all* clients, but that shouldn't be a problem)
         self.widget_mgr.send_stack_update(force=True)
         self.puzzle.notify_state_update("new_connection")
+
+    def get_screen_width(self):
+        H, W = self.screen.getmaxyx()
+        return W
 
 

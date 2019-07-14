@@ -57,8 +57,17 @@ def is_enter_key(key):
 
 # split text into lines (either at \n or ' ') so that it fits into max_cols
 def layout_text(text, max_width):
-    lls = [layout_line(l.strip(), max_width) for l in text.split('\n')]
-    return [l for ls in lls for l in ls] # flatten
+
+    split_text = [l.strip() for l in text.split('\n')]
+
+    lls = [layout_line(l, max_width) for l in split_text]
+    layouted = [l for ls in lls for l in ls] # flatten
+
+    log.debug("Layouting text ({} lines, the longest has {} chars) into max. {} columns:".format(len(split_text), max(len(l) for l in split_text), max_width))
+    log.debug("Resulting text has {} lines, with the longest havaing {} chars.".format(len(layouted), max(len(l) for l in layouted)))
+
+
+    return layouted
 
 def layout_line(line, max_width):
     if len(line) <= max_width:

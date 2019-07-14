@@ -9,7 +9,7 @@ class WidgetBase:
     def __init__(self, app, pos: Vector, size: Vector) -> None:
         self.app = app
         # create new screen for yourself
-        #log.info("creating new widget, pos: {}, size: {}".format(pos, size))
+        log.debug("creating new widget, pos: {}, size: {}".format(pos, size))
         self.screen = curses.newwin(int(size.y), int(size.x), int(pos.y), int(pos.x))
         self.visible = True
 

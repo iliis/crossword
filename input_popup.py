@@ -12,18 +12,15 @@ class InputPopup(WidgetBase):
 
     def __init__(self, app, parent, title, text):
 
-        h, w = parent.getmaxyx()
-        parent_size = Vector(w, h)
+        self.width = min(app.get_screen_width()-4, 90)
 
-        self.layout_text = layout_text(text, 80) # max width: 100
+        self.layout_text = layout_text(text, self.width)
         self.height = len(self.layout_text) + 1 # title, text
-
-        self.width = 90
 
         size = Vector(self.width+4, self.height+4)
 
-        # center in middle of parent
-        super(InputPopup, self).__init__(app, parent_size/2-size/2, size)
+        super(InputPopup, self).__init__(app, Vector(0,0), size)
+        self.center_in(parent)
 
         self.title = title
         self.app = app

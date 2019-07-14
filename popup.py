@@ -14,11 +14,10 @@ class Popup(WidgetBase):
     def __init__(self, app, parent, title, text, buttons=['OK']):
         assert len(buttons) > 0
 
-        h, w = parent.getmaxyx()
-        parent_size = Vector(w, h)
+        desired_width = min(100, app.get_screen_width()) # max 100 cols wide, but not bigger than screen can handle
 
         self.text = text
-        self.layout_text = layout_text(text, 80) # max width: 100
+        self.layout_text = layout_text(text, desired_width-4)
         self.height = len(self.layout_text) + 2 # title, buttons
 
         # set size according to contents of popup
@@ -36,8 +35,8 @@ class Popup(WidgetBase):
         log.info("max line len: {}".format(max(len(l)for l in self.layout_text)))
         """
 
-        # center in middle of parent
-        super(Popup, self).__init__(app, parent_size/2-size/2, size)
+        super(Popup, self).__init__(app, Vector(0,0), size)
+        self.center_in(parent)
 
         self.title = title
         self.app = app
