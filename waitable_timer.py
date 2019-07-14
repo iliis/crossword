@@ -1,6 +1,7 @@
 import threading
 import selectors
 import logging
+import traceback
 
 from waitable_event import WaitableEvent
 
@@ -37,7 +38,11 @@ class WaitableTimer(WaitableEvent):
             self.timer.cancel()
 
         if new_delay is not None:
-            assert new_delay > 0
+            if not new_delay > 0:
+                log.error("WaitableTimer.reset() called with invalid delay of {}".format(new_delay))
+                log.debug(traceback.format_exc())
+                new_delay = 1
+
             self.delay = new_delay
 
         self.clear()

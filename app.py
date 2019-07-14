@@ -47,7 +47,7 @@ def git_cmd(params):
             return label
     except Exception as e:
         log.error("Unhandled Exception: {}".format(e))
-        log.error(traceback.format_exc())
+        log.debug(traceback.format_exc())
         return "UNKNOWN (err)"
 
 def get_version():
@@ -306,9 +306,9 @@ https://github.com/iliis/crossword
 
     def on_shooting_range_closed(self, _):
         self.widget_mgr.remove(self.shooting_range)
-        self.time_ends += self.shooting_range.points_to_bonus_time()
-        self.timeout_timer.reset(self.remaining_time_in_seconds()) # stop any running timer (if any) and set new timeout
-        self.timeout_timer.start()
+
+        # convert bonus point to time
+        self.set_timeout(self.remaining_time_in_seconds() + self.shooting_range.points_to_bonus_time())
 
         self.mi.send_packet({
             'event': 'shooting_range_timeout',
