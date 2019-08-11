@@ -37,6 +37,7 @@ log.setLevel(logging.DEBUG)
 
 def git_cmd(params):
     try:
+        log.debug("executing git command: {}".format(params))
         label = subprocess.check_output(
                     params,
                     cwd=os.path.dirname(os.path.realpath(__file__))).decode('utf8').strip()
@@ -124,7 +125,7 @@ class Application:
         self.sel.register(sys.stdin, selectors.EVENT_READ, self.handle_input)
 
         puzzle_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'puzzle.cfg')
-        with open(puzzle_filename, 'r') as puzzle_cfg:
+        with open(puzzle_filename, 'r', encoding="utf-8") as puzzle_cfg:
             pcfg = json.load(puzzle_cfg)
             log.info("using puzzle configuration: {}".format(pcfg))
             h, w = screen.getmaxyx()
@@ -277,6 +278,8 @@ https://github.com/iliis/crossword
             self.shooting_range.target.is_running = False
 
         self.backup_state()
+        self.mi.close()
+        self.mi = None
 
     def show_popup_from_packet(self, packet):
         if not 'title' in packet or not 'text' in packet:

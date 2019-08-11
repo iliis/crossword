@@ -149,6 +149,9 @@ class ManagementInterface:
         self.handlers[command] = handler
 
     def __del__(self):
+        self.close()
+
+    def close(self):
         log.info('closing server connection')
         self.server_sock.shutdown(socket.SHUT_RDWR)
         self.server_sock.close()
