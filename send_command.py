@@ -64,12 +64,17 @@ def quit():
 
 def ping():
     send({'command': 'ping'})
+    receive()
 
 def reset():
     send({'command': 'reset'})
 
 def restore_backup():
     send({'command': 'restore_saved_state'})
+
+def memory_dump():
+    send({'command': 'memory_dump'})
+    receive()
 
 def just_listen():
     print("waiting for packets...")
@@ -84,6 +89,7 @@ fns = [
         reset,
         ping,
         restore_backup,
+        memory_dump,
     ]
 
 

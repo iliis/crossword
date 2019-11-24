@@ -12,15 +12,8 @@ import signal
 
 from mem_top import mem_top
 
-from helpers import *
-from crossword import Crossword
-from progress_bar import ProgressBar
-from door_panel import DoorPanel
-from management_interface import ManagementInterface
-from widget_manager import WidgetManager
-from shooting_range import ShootingRange, ShootingRangeState
-from waitable_timer import WaitableTimer
-from final_screen import FinalScreen
+import gc
+import pickle
 
 # make sure logfile doesn't grow unboundedly
 if os.path.exists("puzzle.log") and os.path.getsize("puzzle.log") > 1024*1024*10: # limit: 10MB
@@ -37,7 +30,19 @@ log.setLevel(logging.DEBUG)
 
 
 
+from helpers import *
+from crossword import Crossword
+from progress_bar import ProgressBar
+from door_panel import DoorPanel
+from management_interface import ManagementInterface
+from widget_manager import WidgetManager
+from shooting_range import ShootingRange, ShootingRangeState
+from waitable_timer import WaitableTimer
+from final_screen import FinalScreen
+
+
 def git_cmd(params):
+    log.debug("Executing git command: {}".format(params))
     try:
         log.debug("executing git command: {}".format(params))
         label = subprocess.check_output(
@@ -114,6 +119,7 @@ class Application:
         self.mi.register_handler('show_shooting_range', lambda _: self.show_shooting_range())
         self.mi.register_handler('get_time', lambda p: self.mi.reply_success(p, self.remaining_time()))
         self.mi.register_handler('restore_saved_state', self.restore_backup_by_packet);
+        self.mi.register_handler('memory_dump', lambda p: self.memory_dump());
 
         self.mi.new_connection_handler = self.new_connection_handler
 
@@ -175,7 +181,9 @@ class Application:
 
         self.final_screen = FinalScreen(self)
 
-    def __del__(self):
+    def __del__(self): # TODO: this should be implemented using a context manager ('with')
+        self.mi.delete()
+        del self.mi
         self.exit()
 
     def set_timeout(self, seconds):
@@ -478,4 +486,24 @@ https://github.com/iliis/crossword
         H, W = self.screen.getmaxyx()
         return W
 
+    # from https://stackoverflow.com/a/9567831
+    def memory_dump(self):
+        log.info("collecting garbage...")
+        gc.collect()
+        log.info("dumping memory to 'memory_dump.pickle'...")
+        xs = []
+        for obj in gc.get_objects():
+            i = id(obj)
+            size = sys.getsizeof(obj, 0)
+            #    referrers = [id(o) for o in gc.get_referrers(obj) if hasattr(o, '__class__')]
+            referents = [id(o) for o in gc.get_referents(obj) if hasattr(o, '__class__')]
+
+            cls = None
+            if hasattr(obj, '__class__'):
+                cls = str(obj.__class__)
+            xs.append({'id': i, 'class': cls, 'str': str(obj), 'size': size, 'referents': referents})
+
+        with open('memory_dump.pickle', 'wb') as dump:
+            pickle.dump(xs, dump, pickle.HIGHEST_PROTOCOL)
+        log.info("memory dump complete")
 

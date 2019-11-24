@@ -20,6 +20,10 @@ class WaitableTimer(WaitableEvent):
 
         self.sel.register(self, selectors.EVENT_READ, self._sel_callback)
 
+    def delete(self):
+        self.sel.unregister(self)
+        super(WaitableTimer, self).delete()
+
     def _sel_callback(self, _):
         # we're back in the main thread here
         #log.info("_sel_callback: thread = {}".format(threading.currentThread()))
