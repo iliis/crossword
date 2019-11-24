@@ -2,17 +2,20 @@
 
 import os
 import select
+import logging
 
+log = logging.getLogger('puzzle')
 
 class WaitableEvent:
     """
-    Provides an abstract object that can be used to resume select loops with
+    Provides an abstract object that can be used to resume select() loops with
     indefinite waits from another thread or process. This mimics the standard
     threading.Event interface.
     """
 
     def __init__(self):
         self._read_fd, self._write_fd = os.pipe()
+        log.debug("opening pipe: read fd: {}, write fd: {}".format(self._read_fd, self._write_fd))
 
     def wait(self, timeout=None):
         rfds, wfds, efds = select.select([self._read_fd], [], [], timeout)
@@ -36,7 +39,10 @@ class WaitableEvent:
         """
         return self._read_fd
 
-    def __del__(self):
+    def delete(self):
+        log.debug("closing pipe: read fd: {}, write fd: {}".format(self._read_fd, self._write_fd))
         os.close(self._read_fd)
         os.close(self._write_fd)
+        self._read_fd = None
+        self._write_fd = None
 

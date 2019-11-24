@@ -19,6 +19,12 @@ class PacketParser:
             self.timer.callback = self.on_timeout
         self.reset()
 
+    def delete(self):
+        log.debug("deleting PacketParser")
+        if self.timer:
+            self.timer.delete()
+            del self.timer
+
     def reset(self):
         self.length = None
         self.buffer = bytearray()
@@ -148,8 +154,9 @@ class ManagementInterface:
     def register_handler(self, command, handler):
         self.handlers[command] = handler
 
-    def __del__(self):
+    def delete(self):
         log.info('closing server connection')
+        self.selector.unregister(self.server_sock)
         self.server_sock.shutdown(socket.SHUT_RDWR)
         self.server_sock.close()
         for conn in self.connections:
@@ -168,6 +175,19 @@ class ManagementInterface:
 
         if self.new_connection_handler:
             self.new_connection_handler(conn)
+
+    def close_connection(self, conn):
+        log.info("closing connection {}\n".format(conn))
+        self.selector.unregister(conn)
+        conn.close()
+        if conn in self.connections:
+            self.connections.remove(conn)
+        if conn in self.data_buffer:
+            self.data_buffer[conn].delete()
+            del self.data_buffer[conn]
+        else:
+            log.warn("not deleting data buffer")
+
 
     def get_local_addresses(self):
         addrs = []
@@ -196,11 +216,7 @@ class ManagementInterface:
             log.error("Connection to {} failed".format(conn))
 
         # close connection if no data or parse error
-        log.info("closing connection {}\n".format(conn))
-        self.selector.unregister(conn)
-        conn.close()
-        if conn in self.connections:
-            self.connections.remove(conn)
+        self.close_connection(conn)
 
     def encode_packet(self, payload):
         data = json.dumps(payload, cls=EnumEncoder)
@@ -227,7 +243,7 @@ class ManagementInterface:
         # the json library can only handle strings up to version 3.5
         if type(packet) == bytearray:
             packet = packet.decode('utf-8')
-        
+
         log.info("got packet: {}".format(repr(packet)))
 
         payload = json.loads(packet)
@@ -262,7 +278,7 @@ class ManagementInterface:
             conn.sendall(self.encode_packet(reply))
         except Exception as e:
             log.error("sendall() failed; got Exception:\n{}\n{}".format(e, traceback.format_exc()))
-            self.connections.remove(conn)
+            self.close_connection(conn)
 
     def send_packet(self, payload):
         pkt = self.encode_packet(payload)
@@ -271,4 +287,4 @@ class ManagementInterface:
                 conn.sendall(pkt)
             except Exception as e:
                 log.error("sendall() failed; got Exception:\n{}\n{}".format(e, traceback.format_exc()))
-                self.connections.remove(conn)
+                self.close_connection(conn)
