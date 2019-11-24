@@ -10,6 +10,8 @@ import time
 import traceback
 import signal
 
+from mem_top import mem_top
+
 from helpers import *
 from crossword import Crossword
 from progress_bar import ProgressBar
@@ -238,6 +240,10 @@ https://github.com/iliis/crossword
 
     def show_admin_screen(self, pw=None):
         if pw == self.cfg["admin_pw"] or self.cfg["cheats"]:
+            # TODO: don't run when mem_top isn't installed
+            log.debug("Memory top:")
+            log.debug(mem_top())
+
             ser_port = "not connected"
             if self.shooting_range.target is not None:
                 ser_port = self.shooting_range.target.ser.name
