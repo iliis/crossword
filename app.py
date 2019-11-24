@@ -249,7 +249,7 @@ https://github.com/iliis/crossword
     def show_admin_screen(self, pw=None):
         if pw == self.cfg["admin_pw"] or self.cfg["cheats"]:
             # TODO: don't run when mem_top isn't installed
-            if self.cfg[mem_profiling]
+            if self.cfg[mem_profiling]:
                 log.debug("Memory top:")
                 log.debug(mem_top())
 
