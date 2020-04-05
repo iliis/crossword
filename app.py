@@ -10,7 +10,6 @@ import time
 import traceback
 import signal
 
-from mem_top import mem_top
 
 import gc
 import pickle
@@ -172,9 +171,8 @@ class Application:
         self.shooting_range.closed_callback = self.on_shooting_range_closed
 
         if self.shooting_range.target is None:
-            self.widget_mgr.show_popup("Schwerwiegender Fehler", "Konnte keine Verbindung zum Reddot-Target aufbauen. "
-                    "Schiessstand ist deaktiviert, keine Bonuszeit erschiessbar. "
-                    "Dies sollte nicht passieren, bitte melden Sie diesen Fehler der Spielleitung.")
+            self.widget_mgr.show_popup("HallO", "Konnte keine Verbindung zum Reddot-Target aufbauen. "
+                    "Schiessstand ist deaktiviert.") 
         else:
             self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
             self.sel.register(self.shooting_range.target.has_raised_exception, selectors.EVENT_READ, self.handle_exception_in_reddot_target)
