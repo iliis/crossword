@@ -14,6 +14,12 @@ xmodmap -e 'keycode 135 = NoSymbol'
 xmodmap -e 'keycode 64 = NoSymbol'
 xmodmap -e 'keycode 108 = NoSymbol'
 
+# windows key
+xmodmap -e 'keycode 91 = NoSymbol'
+xmodmap -e 'keycode 92 = NoSymbol'
+xmodmap -e 'keycode 133 = NoSymbol'
+xmodmap -e 'keycode 134 = NoSymbol'
+
 # make sure numlock is OFF (otherwise the right-hand side of the EEE's keyboard becomes numbers)
 numlockx off
 
