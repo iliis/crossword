@@ -179,6 +179,11 @@ class Application:
 
         self.final_screen = FinalScreen(self)
 
+        self.check_for_backup()
+
+        self.periodic_backup_timer = WaitableTimer(self.sel, 10, self.on_periodic_backup)
+        self.periodic_backup_timer.start()
+
     def __del__(self): # TODO: this should be implemented using a context manager ('with')
         self.mi.delete()
         del self.mi
@@ -258,7 +263,7 @@ https://github.com/iliis/crossword
                     +'Local Port: {}\n\n'.format(self.mi.port)
                     +'Remote Control Connections:\n{}\n'.format('\n'.join(' - {}'.format(c.getpeername()) for c in self.mi.connections)),
                     callback=self._admin_screen_cb,
-                    buttons=['CLOSE', 'AUTOFILL', 'SHOW SRANGE', 'RESET ALL', 'EXIT APP'])
+                    buttons=['CLOSE', 'LOAD BACKUP', 'AUTOFILL', 'SHOW SRANGE', 'RESET ALL', 'EXIT APP'])
         else:
             self.widget_mgr.show_popup('Passwort Falsch', 'Die Management-Konsole ist nur für die Spielleitung gedacht, sorry.')
 
@@ -272,6 +277,13 @@ https://github.com/iliis/crossword
             self.puzzle.autofill()
         elif button == 'SHOW SRANGE':
             self.show_shooting_range()
+        elif button == 'LOAD BACKUP':
+            if not self.restore_backup():
+                self.widget_mgr.show_popup('Backup wiederhestellen fehlgeschlagen', 'Konnte kein Backup laden. Kontrollier das log für weitere Fehler. Gibt es überhaupt ein Backup?')
+        elif button == 'CLOSE':
+            pass # just ignore
+        else:
+            raise ValueError("Unknown button pressed in admin panel: '" + str(button) + "'.")
 
     def exit_app_by_packet(self, packet):
         log.info("Exiting application trough remote command.")
@@ -378,9 +390,15 @@ https://github.com/iliis/crossword
                 callback = key.data
                 callback(key.fileobj)
 
+    def on_periodic_backup(self):
+        self.backup_state()
+        self.periodic_backup_timer.reset()
+        self.periodic_backup_timer.start()
+
     def backup_state(self):
         state = {
-            # TODO: store this as an absolute timestamp, so time continues?
+            # Q: store this as an absolute timestamp, so time continues?
+            # A: No, don't count time it took to restart app, that's not the players fault
             'time_remaining': self.remaining_time_in_seconds(),
             # TODO: puzzle state backup/restore should be handled in Crossword class itself
             'puzzle_input': [''.join(line) for line in self.puzzle.puzzle_input],
@@ -418,6 +436,10 @@ https://github.com/iliis/crossword
         if state is None:
             return False
 
+        # don't restore a completed game
+        if state["time_remaining"] <= 0:
+            return False
+
         self.set_timeout(state["time_remaining"])
 
         if state["puzzle_solved"]:
@@ -444,6 +466,13 @@ https://github.com/iliis/crossword
             return False # no backup -> nothing interesting
 
         backup = self.load_backup()
+        if not backup:
+            log.error("Failed to load backup even though file exists?! This should not happen.")
+            return False
+
+        if backup["time_remaining"] <= 0:
+            return False
+
         if backup["puzzle_solved"]:
             return True
 
@@ -456,7 +485,6 @@ https://github.com/iliis/crossword
         return False
 
     def check_for_backup(self):
-
         # check if backup contains anything interesting
         if self.is_backup_different():
             # if so, ask if you want to restore it
