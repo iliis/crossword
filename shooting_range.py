@@ -107,7 +107,7 @@ class ShootingRange(WidgetBase):
         self.timeout_timer.reset(self.TIMEOUT)
 
     def handle_input(self, key):
-        if not self.app.with_cheats:
+        if not self.app.cfg["cheats"]:
             return
 
         # insert random shot
