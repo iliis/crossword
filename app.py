@@ -170,7 +170,7 @@ class Application:
         self.shooting_range.closed_callback = self.on_shooting_range_closed
 
         if self.shooting_range.target is None:
-            self.widget_mgr.show_popup("HallO", "Konnte keine Verbindung zum Reddot-Target aufbauen. "
+            self.widget_mgr.show_popup("Hallo", "Konnte keine Verbindung zum Reddot-Target aufbauen. "
                     "Schiessstand ist deaktiviert.") 
         else:
             self.sel.register(self.shooting_range.target.shots_queue_available, selectors.EVENT_READ, self.handle_shot)
