@@ -217,6 +217,8 @@ class ManagementInterface:
             log.error("got invalid packet data: '{}'".format(data))
         except ConnectionResetError:
             log.error("Connection to {} failed".format(conn))
+        except Exception as e: # handle other exceptions, like OSError (e.g. "No route to host")
+            log.error("Connection to {} failed; got Exception:\n{}\n{}".format(conn, e, traceback.format_exc()))
 
         # close connection if no data or parse error
         self.close_connection(conn)
