@@ -142,6 +142,7 @@ Commands
 
 - *show_shooting_range*: Shows shooting range window ;)
 - *restore_saved_state*: Load backup from disk (if any). Useful if application crashed.
+- *wakeup*: Send a key to wake up application from sleep / exit screensaver.
 
 
 Events

@@ -118,6 +118,7 @@ class Application:
         self.mi.register_handler('get_time', lambda p: self.mi.reply_success(p, self.remaining_time()))
         self.mi.register_handler('restore_saved_state', self.restore_backup_by_packet);
         self.mi.register_handler('memory_dump', lambda p: self.memory_dump());
+        self.mi.register_handler('wakeup', lambda p: self.wakeup_screen());
 
         self.mi.new_connection_handler = self.new_connection_handler
 
@@ -528,4 +529,9 @@ https://github.com/iliis/crossword
         with open('memory_dump.pickle', 'wb') as dump:
             pickle.dump(xs, dump, pickle.HIGHEST_PROTOCOL)
         log.info("memory dump complete")
+
+    def wakeup_screen(self):
+        log.info("sending key to wakeup screen")
+        subprocess.check_call(["xdotool", "key", "Up"])
+
 

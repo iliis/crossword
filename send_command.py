@@ -81,6 +81,10 @@ def just_listen():
     while True:
         receive()
 
+def wakeup():
+    send({'command': 'wakeup'})
+    receive()
+
 
 fns = [
         just_listen,
@@ -90,6 +94,7 @@ fns = [
         ping,
         restore_backup,
         memory_dump,
+        wakeup,
     ]
 
 
