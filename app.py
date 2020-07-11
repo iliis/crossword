@@ -217,7 +217,7 @@ class Application:
 
     def show_static_crossword(self):
         log.info("showing crossword again")
-        self.widget_mgr.remove(self.final_screen)
+        self.widget_mgr.remove_all()
         self.widget_mgr.show(self.puzzle)
 
     def handle_input(self, stdin):
