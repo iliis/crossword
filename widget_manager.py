@@ -51,6 +51,7 @@ class WidgetManager:
         log.debug("removing all widgets")
         self.widgets = []
         self.send_stack_update()
+        self.render(clear=True)
 
     def raise_to_fg(self, widget):
         # move widget to end of list
