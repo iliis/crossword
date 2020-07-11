@@ -181,15 +181,18 @@ class ManagementInterface:
 
     def close_connection(self, conn):
         log.info("closing connection {}\n".format(conn))
-        self.selector.unregister(conn)
-        conn.close()
-        if conn in self.connections:
-            self.connections.remove(conn)
-        if conn in self.data_buffer:
-            self.data_buffer[conn].delete()
-            del self.data_buffer[conn]
-        else:
-            log.warn("not deleting data buffer")
+        try:
+            self.selector.unregister(conn)
+            conn.close()
+            if conn in self.connections:
+                self.connections.remove(conn)
+            if conn in self.data_buffer:
+                self.data_buffer[conn].delete()
+                del self.data_buffer[conn]
+            else:
+                log.warn("not deleting data buffer")
+        except Exception as e:
+            log.warn("Failed to close connection: {}\n".format(e))
 
 
     def get_local_addresses(self):
